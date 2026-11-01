@@ -1,0 +1,46 @@
+## Build results
+bin/
+obj/
+out/
+
+## User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+## VS Code settings
+.vscode/
+
+## Visual Studio settings
+.vs/
+
+## NuGet packages
+*.nupkg
+packages/
+*.snupkg
+
+## Logs
+*.log
+
+## Temporary files
+*.tmp
+*.temp
+
+## IDE-specific folders
+TestResults/
+Generated_Code/
+
+## OS-specific
+Thumbs.db
+.DS_Store
+
+## Dotnet artifacts
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## Others
+*.swp
+*.bak
+*.orig
