@@ -1,5 +1,6 @@
 using Application.DTO;
 using Application.UseCases;
+using Domain.Exceptions;
 using Domain.Models;
 using Domain.Ports;
 using Moq;
@@ -17,7 +18,8 @@ namespace Tests.Application
         {
             var vector = new Mock<IVector>();
 
-            await Assert.ThrowsAsync<ArgumentException>(() => new SearchGuidesUseCase(vector.Object, ConfiguredTopK).ExecuteAsync(query));
+            var ex = await Assert.ThrowsAsync<DomainException>(() => new SearchGuidesUseCase(vector.Object, ConfiguredTopK).ExecuteAsync(query));
+            Assert.Equal(ErrorCode.InvalidRequest, ex.Code);
 
             vector.Verify(r => r.SearchAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
         }

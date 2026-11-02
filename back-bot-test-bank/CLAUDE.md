@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-Hexagonal Architecture (Ports & Adapters) in C# on .NET 8 (`net8.0`, nullable + implicit usings enabled). The project is being turned into a RAG customer service bot API for "Bank Test" (see `.sdd/specs/001-rag-customer-bot-back/`). The original `Register` sample has been removed, so the layers are currently empty.
+Hexagonal Architecture (Ports & Adapters) in C# on .NET 8 (`net8.0`, nullable + implicit usings enabled). The project is being turned into a RAG customer service bot API for "Bank Test" (see `.sdd/specs/001-guide-search/` for search and errors, and `.sdd/specs/002-rag-customer-bot-chat/` for the chat). The original `Register` sample has been removed, so the layers are currently empty.
 
 ## Commands
 

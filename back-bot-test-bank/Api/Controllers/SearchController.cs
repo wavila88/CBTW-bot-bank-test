@@ -11,20 +11,15 @@ namespace Api.Controllers
     [DevelopmentOnly]
     public class SearchController(ISearchGuidesUseCase searchGuides, ILogger<SearchController> logger) : ControllerBase
     {
+        // Errors are not caught here: the global handler turns them into responses.
         [HttpGet]
         public async Task<ActionResult<IEnumerable<SearchResultResponse>>> Get(
-            [FromQuery] string query, [FromQuery] int? topK = null, CancellationToken ct = default)
+            [FromQuery] string? query, [FromQuery] int? topK = null, CancellationToken ct = default)
         {
-            try
-            {
-                logger.LogInformation("Diagnostic search with topK {TopK}", topK);
-                var fragments = await searchGuides.ExecuteAsync(query, topK, ct);
-                return Ok(fragments.Select(f => new SearchResultResponse(f.Id, f.Score, f.DocId, f.Section, f.Type, f.Text)));
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            // Nullable on purpose: an empty question is rejected by the use case, so the 400 uses the same table as every other error.
+            logger.LogInformation("Diagnostic search with topK {TopK}", topK);
+            var fragments = await searchGuides.ExecuteAsync(query ?? string.Empty, topK, ct);
+            return Ok(fragments.Select(f => new SearchResultResponse(f.Id, f.Score, f.DocId, f.Section, f.Type, f.Text)));
         }
     }
 }

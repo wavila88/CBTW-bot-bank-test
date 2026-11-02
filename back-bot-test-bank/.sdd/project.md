@@ -11,11 +11,12 @@ Last scan: 2026-11-01 (updated after removing the `Register` sample, spec 001 ph
 - No other libraries in the production projects yet (← all *.csproj)
 
 ## Planned decisions (from specs, not yet in code)
-- Pure hexagon: `Application` references only `Domain`, never an external package (no Semantic Kernel, no vendor SDK). All bot logic lives in `Application` and calls out through our own ports in `Domain` (← .sdd/specs/001-rag-customer-bot-back/spec.md)
-- Microsoft Semantic Kernel is the chosen library for conversation state (`ChatHistory` + history reducer) and chat completion. Prefer library features over manual code, but only inside adapters: one project per adapter: `Infra.Vector.Pinne` for Pinecone and an `Infra.AI.*` project for Semantic Kernel (name to decide) (← same spec)
-- Model and vector store are swappable by configuration: a new provider means a new adapter project (`Infra.<Kind>.<Name>`) plus a config value (← same spec)
-- Conversations are kept server-side by `conversationId`, in memory behind a port (← same spec)
-- English is the priority reply language; the default and fallback is English (← same spec)
+- Pure hexagon: `Application` references only `Domain`, never an external package (no Semantic Kernel, no vendor SDK). All bot logic lives in `Application` and calls out through our own ports in `Domain` (← .sdd/specs/001-guide-search/spec.md)
+- Microsoft Semantic Kernel is the chosen library for conversation state (`ChatHistory` + history reducer) and chat completion. Prefer library features over manual code, but only inside adapters: one project per adapter: `Infra.Vector.Pinne` for Pinecone and an `Infra.AI.*` project for Semantic Kernel (name to decide) (← .sdd/specs/002-rag-customer-bot-chat/spec.md)
+- Model and vector store are swappable by configuration: a new provider means a new adapter project (`Infra.<Kind>.<Name>`) plus a config value (← .sdd/specs/002-rag-customer-bot-chat/spec.md)
+- Conversations are kept server-side by `conversationId`, in memory behind a port (← .sdd/specs/002-rag-customer-bot-chat/spec.md)
+- English is the priority reply language; the default and fallback is English (← .sdd/specs/002-rag-customer-bot-chat/spec.md)
+- Error handling: Domain defines `DomainException` with a code (`ErrorCode`), with no text and no HTTP; Infra translates vendor failures into codes; Application never chooses the HTTP response; one table in `Api/Errors` maps codes to status and customer message, and one global handler logs the real cause with a trace id; no stack trace, inner message, key or URL reaches the caller, in Development too; controllers do not catch domain errors (← spec 001, phase 3a)
 
 ## Architecture
 - Pattern: Hexagonal / Ports & Adapters (← README.md, CLAUDE.md)
@@ -36,7 +37,7 @@ Carried over from the removed `Register` sample; follow them in new code.
 - One shape per layer (Api DTO, Application DTO, Domain model), mapped manually, no mapper library
 - Block-scoped namespaces matching the folder (e.g. `namespace Tests { ... }`)
 - Controllers: `[ApiController]`, `[Route("[controller]")]`, `ILogger<T>` injected
-- Error handling and logging conventions: none established yet
+- Error handling: implemented in spec 001 phase 3a (one table in `Api/Errors`); Pinecone failure codes come in phase 3b, pending
 
 ## Configuration
 - Environment-specific values (keys, index name, namespace, embedding model, dimension, TopK, host) come from environment variables, e.g. `Pinecone__ApiKey`, `Pinecone__IndexName`, `Chat__TopK`. Never hardcode them in code or commit them in JSON.
@@ -60,4 +61,4 @@ Carried over from the removed `Register` sample; follow them in new code.
 - Diagnostic: `GET /Search?query=...&topK=5` (Development only) returns the guide fragments Pinecone finds (← Api/Controllers/SearchController.cs)
 
 ## Not detected / questions
-- Error-handling/logging conventions: none established yet (spec 001 SP-2/SP-3 will set them).
+- Error-handling/logging conventions: set by spec 001 phase 3a (see Planned decisions and `Api/Errors`).

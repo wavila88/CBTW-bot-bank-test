@@ -1,4 +1,5 @@
 using Application.DTO;
+using Domain.Exceptions;
 using Domain.Ports;
 
 namespace Application.UseCases
@@ -9,7 +10,7 @@ namespace Application.UseCases
         public async Task<IReadOnlyList<GuideFragmentDTO>> ExecuteAsync(string query, int? topK = null, CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(query))
-                throw new ArgumentException("The question is empty.", nameof(query));
+                throw new DomainException(ErrorCode.InvalidRequest, "The question is empty.");
 
             var chunks = await vector.SearchAsync(query.Trim(), topK ?? configuredTopK, ct);
             return chunks
