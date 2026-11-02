@@ -4,27 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-Template/example of Hexagonal Architecture (Ports & Adapters) in C# on .NET 8 (`net8.0`, nullable + implicit usings enabled). The domain is a "Register" (a person registering seats). Adapters are still stubs that `throw new NotImplementedException()`.
+Hexagonal Architecture (Ports & Adapters) in C# on .NET 8 (`net8.0`, nullable + implicit usings enabled). The project is being turned into a RAG customer service bot API for "Bank Test" (see `.sdd/specs/001-rag-customer-bot-back/`). The original `Register` sample has been removed, so the layers are currently empty.
 
 ## Commands
 
-No tests exist yet. The `.sln` file is empty (it lists no projects), so build per project rather than via the solution:
-
-- Build: `dotnet build Api/Api.csproj` (builds project references transitively)
+- Build: `dotnet build back-bot-test-bank.sln`
+- Test: `dotnet test Tests/Tests.csproj` (xUnit + Moq, unit tests only, no real network calls)
 - Run: `dotnet run --project Api --launch-profile http` (http://localhost:5082) or `--launch-profile https` (https://localhost:7283). Swagger UI is served at `/swagger` in Development only.
 
 ## Architecture
 
-Dependency direction: `Application → Domain` and `Infra → Domain`. `Domain` references nothing. `Api` currently has **no** project references, so it does not yet reach Application/Infra.
+Dependency direction: `Application → Domain` and `Infra → Domain`. `Domain` references nothing. `Api` currently has **no** project references, so it does not yet reach Application/Infra. `Tests` references all four.
 
-- **Domain/**: entity (`Models/Register`) and the output port `Repositories/IRegisterRepository` (persistence).
-- **Application/**: use cases. `RegisterUseCase` maps `RegisterDTO` to the domain `Register` and calls `IRegisterRepository.SaveRegister`.
-- **Infra/**: output adapters implementing the Domain ports (DB save).
-- **Api/**: input adapter. `RegisterController` (`POST /Register`) takes `Api.DTO.Register`. It is not yet wired to `IRegisterUseCase`, and `Program.cs` has no DI registrations for use cases or adapters.
+- **Domain/**: entities and output ports (interfaces).
+- **Application/**: use cases. References only `Domain`, never an external package.
+- **Infra/**: output adapters implementing the Domain ports, one folder per adapter.
+- **Api/**: input adapter (controllers, DTOs, DI wiring in `Program.cs`).
 
-Three parallel DTO/model shapes exist (`Api.DTO.Register`, `Application.DTO.RegisterDTO`, `Domain.Models.Register`); mapping between layers is manual, with no mapper library. `RegisterDTO` also carries `QuantityOfPeopleConected`, which is not mapped into the domain model.
-
-## Gotchas
-
-- In Infra, `RegisterRepository` lives in `Infra/Publisher/` with namespace `Infra.Publisher` (a leftover name from the removed publisher). Fix it deliberately if you touch it.
-- The comment in `IRegisterRepository` points to a wrong adapter location (`Infra.Messaging`), which does not exist.
+Each layer has its own shape for the data it handles; mapping between layers is manual, with no mapper library.
