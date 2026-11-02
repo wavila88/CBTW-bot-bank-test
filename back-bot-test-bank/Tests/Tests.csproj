@@ -23,7 +23,7 @@
     <ProjectReference Include="..\Api\Api.csproj" />
     <ProjectReference Include="..\Application\Application.csproj" />
     <ProjectReference Include="..\Domain\Domain.csproj" />
-    <ProjectReference Include="..\Infra\Infra.csproj" />
+    <ProjectReference Include="..\Infra.Vector.Pinne\Infra.Vector.Pinne.csproj" />
   </ItemGroup>
 
 </Project>

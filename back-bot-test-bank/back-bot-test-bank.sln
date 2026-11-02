@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Application", "Application\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain", "Domain\Domain.csproj", "{D80E0074-1A8B-4E5F-8CF4-A9D793BC3A3F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infra", "Infra\Infra.csproj", "{75FDD1AB-B120-4717-885C-4BDDD5FF15A9}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infra.Vector.Pinne", "Infra.Vector.Pinne\Infra.Vector.Pinne.csproj", "{75FDD1AB-B120-4717-885C-4BDDD5FF15A9}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{852DE52F-0184-436D-9F79-CBFE9AA9D763}"
 EndProject

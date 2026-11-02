@@ -44,3 +44,6 @@ artifacts/
 *.swp
 *.bak
 *.orig
+
+## Local settings with real keys (the template is appsettings.Local.example.json)
+appsettings.Local.json
