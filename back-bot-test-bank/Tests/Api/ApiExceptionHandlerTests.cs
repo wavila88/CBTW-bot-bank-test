@@ -21,6 +21,7 @@ namespace Tests.Api
         [InlineData(ErrorCode.NotFound, 503, Unavailable)]
         [InlineData(ErrorCode.Timeout, 504, "The search service took too long. Please try again.")]
         [InlineData(ErrorCode.Malformed, 502, "The search service returned an unexpected response.")]
+        [InlineData(ErrorCode.TooManyRequests, 429, "You are sending requests too fast. Please wait a minute and try again.")]
         public async Task TryHandleAsync_ReturnsTheStatusAndCustomerMessageForEachCode(ErrorCode code, int status, string message)
         {
             var (context, body) = await HandleAsync(new DomainException(code, InternalDetail));

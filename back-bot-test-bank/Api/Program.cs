@@ -1,4 +1,7 @@
+using System.Threading.RateLimiting;
+using Api.RateLimiting;
 using Application.UseCases;
+using Domain.Exceptions;
 using Domain.Ports;
 using Infra.Vector.Pinne;
 
@@ -24,6 +27,24 @@ builder.Services.AddScoped<ISearchGuidesUseCase>(sp =>
 
 // Add services to the container.
 
+// Rate limit: one global limiter for every endpoint, counted per client IP. Settings come from configuration.
+var rateLimit = builder.Configuration.GetSection("RateLimit").Get<RateLimitOptions>() ?? new RateLimitOptions();
+rateLimit.Validate();
+builder.Services.AddRateLimiter(limiter =>
+{
+    limiter.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = rateLimit.PermitLimit,
+                Window = TimeSpan.FromSeconds(rateLimit.WindowSeconds),
+                QueueLimit = 0
+            }));
+    // The rejection becomes a DomainException so the global handler answers with the same format as every other error.
+    limiter.OnRejected = (_, _) => throw new DomainException(ErrorCode.TooManyRequests, "Client exceeded the request limit.");
+});
+
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<Api.Errors.ApiExceptionHandler>();
 builder.Services.AddControllers();
@@ -34,6 +55,7 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 app.UseExceptionHandler();
+app.UseRateLimiter();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

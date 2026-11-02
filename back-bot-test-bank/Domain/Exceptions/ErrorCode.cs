@@ -10,6 +10,7 @@ namespace Domain.Exceptions
         RateLimited,
         Unavailable,
         NotFound,
-        Malformed
+        Malformed,
+        TooManyRequests
     }
 }

@@ -30,6 +30,7 @@ namespace Api.Errors
             ErrorCode.InvalidRequest => (400, "The question is empty."),
             ErrorCode.Timeout => (504, "The search service took too long. Please try again."),
             ErrorCode.Malformed => (502, "The search service returned an unexpected response."),
+            ErrorCode.TooManyRequests => (429, "You are sending requests too fast. Please wait a minute and try again."),
             null => (500, "Something went wrong."),
             _ => (503, "The search service is unavailable. Please try again.")
         };

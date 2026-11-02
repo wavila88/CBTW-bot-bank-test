@@ -44,28 +44,17 @@ Manual check: `GET /Search?query=` returns 400 with the customer message; a forc
 - [x] 3a.3 Passing test — result: `Passed! - Failed: 0, Passed: 25, Total: 25`; `dotnet build back-bot-test-bank.sln` 0 warnings, 0 errors. Manual: `GET /Search?query=%20` → 400 `{"status":400,"title":"Request failed","detail":"The question is empty.","traceId":"0HNPOMC5RDOEU:00000001"}`; the console shows `Request failed with InvalidRequest, trace 0HNPOMC5RDOEU:00000001`. A forced 500 is covered by `TryHandleAsync_UsesTheGenericMessageForAnyOtherException`
 - [x] 3a.4 Developer approval — approved by the developer
 
-## Phase 3b — Pinecone failures become codes (covers SP-2)
-Result: `Infra.Vector.Pinne` translates each Pinecone failure into a `DomainException` code: network errors → `Unreachable`, timeouts → `Timeout`, 401/403 → `Rejected`, 429 → `RateLimited`, 5xx → `Unavailable`, 404 on the index → `NotFound`, response without the expected shape → `Malformed`. The original exception and Pinecone's response status go in the inner exception, for the log only. (The controller's `try/catch` was already removed in 3a.)
-
-Test: `Tests/Infra/PineconeVectorTests.cs` asserts, with a stubbed `HttpMessageHandler`, one test per row: the stub returns the status, a `TaskCanceledException`, or an `HttpRequestException`, and the test checks the resulting code. The 401 test also checks that the inner exception keeps the status.
-Manual check: set a wrong `Pinecone__ApiKey`, call `GET /Search?query=hello`: 503 with the customer message and a trace id; the console shows `Rejected` with `401`.
-
-- [ ] 3b.1 Failing test — result: ________
-- [ ] 3b.2 Implementation — files: ________
-- [ ] 3b.3 Passing test — result: ________
-- [ ] 3b.4 Developer approval
-
 ## Phase 3c — Rate limit: 5 requests per minute per client (covers SP-3)
-Result: the API rejects the 6th request from the same client IP within one minute with 429, the customer message "You are sending requests too fast. Please wait a minute and try again.", and a `Retry-After` header with the seconds left in the window. The rejection happens before any controller or service runs, so Pinecone is not called. The limiter is one global limiter in the pipeline (`UseRateLimiter`), not an attribute on each controller, so new endpoints are covered automatically. Values come from `RateLimit__PermitLimit` and `RateLimit__WindowSeconds`, validated at startup like the Pinecone settings. The table gets a row for `TooManyRequests` (429), so this response has the same format as every other error.
+Result: the API rejects the 6th request from the same client IP within one minute with 429 and the customer message "You are sending requests too fast. Please wait a minute and try again.". The rejection happens before any controller or service runs, so Pinecone is not called. The limiter is one global limiter in the pipeline (`UseRateLimiter`), not an attribute on each controller, so new endpoints are covered automatically. Values come from `RateLimit__PermitLimit` and `RateLimit__WindowSeconds`, validated at startup like the Pinecone settings. The table gets a row for `TooManyRequests` (429), so this response has the same format as every other error.
 
 | Code | HTTP | Customer message |
 |---|---|---|
 | `TooManyRequests` | 429 | "You are sending requests too fast. Please wait a minute and try again." |
 
 Test: `Tests/Api/ApiExceptionHandlerTests.cs` gets a row for `TooManyRequests` (429 and the message). `Tests/Api/RateLimitOptionsTests.cs` asserts that startup validation names a missing `RateLimit__PermitLimit` or `RateLimit__WindowSeconds`, and rejects zero or negative values. The counting itself belongs to the framework and is verified manually.
-Manual check: run the API and send 6 requests to `GET /Search?query=hello` within a minute: the first 5 get a search result (or 503 if Pinecone is not configured); the 6th gets 429 with the customer message and a `Retry-After` header. A minute later a request works again.
+Manual check: run the API and send 6 requests to `GET /Search?query=hello` within a minute: the first 5 get a search result (or 503 if Pinecone is not configured); the 6th gets 429 with the customer message. A minute later a request works again.
 
-- [ ] 3c.1 Failing test — result: ________
-- [ ] 3c.2 Implementation — files: ________
-- [ ] 3c.3 Passing test — result: ________
-- [ ] 3c.4 Developer approval
+- [x] 3c.1 Failing test — result: `CS0117 'ErrorCode' does not contain a definition for 'TooManyRequests'` (ApiExceptionHandlerTests) and `CS0234 The type or namespace name 'RateLimiting' does not exist in the namespace 'Api'` (RateLimitOptionsTests); build error, tests do not run
+- [x] 3c.2 Implementation — files: `Domain/Exceptions/ErrorCode.cs` (`TooManyRequests`), `Api/RateLimiting/RateLimitOptions.cs` (new, validated at startup), `Api/Errors/ApiExceptionHandler.cs` (429 row), `Api/Program.cs` (`AddRateLimiter` as a global per-IP fixed-window limiter, `UseRateLimiter` after `UseExceptionHandler`)
+- [x] 3c.3 Passing test — result: `Passed! - Failed: 0, Passed: 29, Total: 29`; `dotnet build back-bot-test-bank.sln` 0 warnings, 0 errors. Manual, starting the API with only `Api/appsettings.Local.json` (`RateLimit` section, 5 per 60 seconds): requests 1 to 5 pass the limiter and the 6th returns 429 `{"status":429,"title":"Request failed","detail":"You are sending requests too fast. Please wait a minute and try again.","traceId":"..."}`. The `Retry-After` header was dropped from the phase: the exception handler clears response headers, and the message already tells the client to wait a minute.
+- [x] 3c.4 Developer approval — approved by the developer

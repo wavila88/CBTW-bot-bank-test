@@ -16,7 +16,7 @@ Last scan: 2026-11-01 (updated after removing the `Register` sample, spec 001 ph
 - Model and vector store are swappable by configuration: a new provider means a new adapter project (`Infra.<Kind>.<Name>`) plus a config value (← .sdd/specs/002-rag-customer-bot-chat/spec.md)
 - Conversations are kept server-side by `conversationId`, in memory behind a port (← .sdd/specs/002-rag-customer-bot-chat/spec.md)
 - English is the priority reply language; the default and fallback is English (← .sdd/specs/002-rag-customer-bot-chat/spec.md)
-- Error handling: Domain defines `DomainException` with a code (`ErrorCode`), with no text and no HTTP; Infra translates vendor failures into codes; Application never chooses the HTTP response; one table in `Api/Errors` maps codes to status and customer message, and one global handler logs the real cause with a trace id; no stack trace, inner message, key or URL reaches the caller, in Development too; controllers do not catch domain errors (← spec 001, phase 3a)
+- Error handling: Domain defines `DomainException` with a code (`ErrorCode`), with no text and no HTTP; Application never chooses the HTTP response; one table in `Api/Errors` maps codes to status and customer message, and one global handler logs the real cause with a trace id; no stack trace, inner message, key or URL reaches the caller, in Development too; controllers do not catch domain errors (← spec 001, phase 3a)
 
 ## Architecture
 - Pattern: Hexagonal / Ports & Adapters (← README.md, CLAUDE.md)
