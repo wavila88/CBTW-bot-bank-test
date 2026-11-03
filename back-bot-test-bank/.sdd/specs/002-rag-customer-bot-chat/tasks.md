@@ -5,14 +5,14 @@ Test command: `dotnet test Tests/Tests.csproj`
 Continues from `001-guide-search/tasks.md` (phases 1 to 3c, the guide search and the error contract, are done or pending there). Phase numbers continue from spec 001 so references stay stable. Each phase has a concrete result and ends with something the developer can run.
 
 ## Phase 4 — Talk to the chat model through Semantic Kernel (covers HP-1, generation part)
-Result: `IChatModel` (Domain port) and its Semantic Kernel adapter in the `Infra.AI.*` project send a list of messages (system/user/assistant) and return the model's text, with the provider and model read from configuration (`Chat__Model`). A Development-only endpoint `POST /Diagnostics/Chat` sends a message to the model and returns its reply.
-Test: no automated test for the adapter's pass-through calls (see spec 002 Decisions); verified manually against the real model.
-Manual check: set `OpenAI__ApiKey` (or put it in `Api/appsettings.Local.json`), run the API, send "Say hello" from Swagger and get a reply; confirm that no Semantic Kernel type appears outside the `Infra.AI.*` project.
+Result: `IChatModel` (Domain port) and its Semantic Kernel adapter in the `Infra.AI.SemanticKernel` project send a list of messages (system/user/assistant) and return the model's text, with the provider and model read from configuration (`Chat__Model`). A Development-only endpoint `POST /Diagnostics/Chat` sends a message to the model and returns its reply.
+Test: `Tests/Infra/OpenAIChatOptionsTests.cs` (startup validation names `OpenAI__ApiKey` and `Chat__Model` when missing), `Tests/Infra/ChatHistoryMapperTests.cs` (the domain messages keep their roles and order when mapped to Semantic Kernel's history) and `Tests/Application/TalkToModelUseCaseTests.cs` (an empty message is rejected without calling the model; the trimmed message goes as the only user message). The call to the real model is verified manually.
+Manual check: set `OpenAI__ApiKey` (or put it in `Api/appsettings.Local.json`), run the API, send "Say hello" from Swagger and get a reply; confirm that no Semantic Kernel type appears outside the `Infra.AI.SemanticKernel` project.
 
-- [ ] 4.1 Failing test — result: ________
-- [ ] 4.2 Implementation — files: ________
-- [ ] 4.3 Passing test — result: ________
-- [ ] 4.4 Developer approval
+- [x] 4.1 Failing test — result: `CS0234 The type or namespace name 'AI' does not exist in the namespace 'Infra'` (OpenAIChatOptionsTests, ChatHistoryMapperTests); build error, tests do not run. The empty project `Infra.AI.SemanticKernel` (Semantic Kernel 1.81) was created first so the tests can reference it
+- [x] 4.2 Implementation — files: `Domain/Models/ChatRole.cs`, `Domain/Models/ChatMessage.cs`, `Domain/Ports/IChatModel.cs` (new); `Infra.AI.SemanticKernel/` (new project: `OpenAIChatOptions.cs`, `ChatHistoryMapper.cs`, `SemanticKernelChatModel.cs`, `ServiceCollectionExtensions.cs`); `Application/UseCases/ITalkToModelUseCase.cs` and `TalkToModelUseCase.cs` (new); `Api/Controllers/DiagnosticsController.cs`, `Api/DTO/TalkRequest.cs`, `Api/DTO/TalkResponse.cs` (new); `Api/Program.cs` (options, `AddSemanticKernelChatModel`, use case), `Api/Api.csproj`, `Tests/Tests.csproj`, `back-bot-test-bank.sln` (new project); `Api/appsettings.Local.json` (`Chat:Model`, not committed); tests `Tests/Infra/OpenAIChatOptionsTests.cs`, `Tests/Infra/ChatHistoryMapperTests.cs`, `Tests/Application/TalkToModelUseCaseTests.cs`
+- [x] 4.3 Passing test — result: `Passed! - Failed: 0, Passed: 35, Total: 35`; `dotnet build back-bot-test-bank.sln` 0 warnings, 0 errors. Manual, without an OpenAI key: startup stops with `Missing settings: OpenAI__ApiKey`. With a fake key: `POST /Diagnostics/Chat` with an empty message gives 400; with "Say hello" the call reaches OpenAI (the log shows `HTTP 401 invalid_api_key`) and the client gets the generic 500. Real model, checked by the developer: three messages through `POST /Diagnostics/Chat` (unauthorized charges, how to block a card, a thank-you) all got replies. Each call is independent, with no history and no guides, so the third reply had no context; that is expected until phases 5, 6 and 8
+- [x] 4.4 Developer approval — approved by the developer after the real-model check
 
 ## Phase 5 — Ask-a-question use case (covers HP-1, logic part)
 Result: the use case in `Application` searches, builds the prompt (rules file as system message, fragments with their ids, customer question) and returns the model's answer with the sources (id and score). It uses only the ports.
@@ -99,7 +99,7 @@ Note: the idle expiry value (proposed 30 minutes) is pending developer confirmat
 - [ ] 13.4 Developer approval
 
 ## Phase 14 — Chat model failures (covers SP-3)
-Result: the `Infra.AI.*` adapter translates each failure of the chat model into a spec 001 code, the same way `Infra.Vector.Pinne` does for Pinecone: network errors → `Unreachable`, timeouts → `Timeout`, 401/403 → `Rejected`, 429 → `RateLimited`, 5xx → `Unavailable`, response without the expected shape → `Malformed`. The spec 001 handler gives the customer the table's message and status, with no keys or internals. No new exception type.
+Result: the `Infra.AI.SemanticKernel` adapter translates each failure of the chat model into a spec 001 code, the same way `Infra.Vector.Pinne` does for Pinecone: network errors → `Unreachable`, timeouts → `Timeout`, 401/403 → `Rejected`, 429 → `RateLimited`, 5xx → `Unavailable`, response without the expected shape → `Malformed`. The spec 001 handler gives the customer the table's message and status, with no keys or internals. No new exception type.
 Test: `Tests/Infra/` asserts, with a stubbed `HttpMessageHandler`, the mapping for each row (status, timeout and network failure) and that the inner exception keeps the original status for the log.
 Manual check: run the API with a wrong OpenAI key, ask a question, and get a 503 with the customer message and a trace id; the console shows `Rejected` with `401`.
 

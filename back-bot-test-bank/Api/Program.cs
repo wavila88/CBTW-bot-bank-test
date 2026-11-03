@@ -3,6 +3,7 @@ using Api.RateLimiting;
 using Application.UseCases;
 using Domain.Exceptions;
 using Domain.Ports;
+using Infra.AI.SemanticKernel;
 using Infra.Vector.Pinne;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,9 +22,18 @@ builder.Services.AddHttpClient();
 builder.Services.AddSingleton<IVector>(sp =>
     new PineconeVector(sp.GetRequiredService<IHttpClientFactory>().CreateClient(), pinecone));
 
+// The chat model reads the key from OpenAI__ApiKey and the model name from Chat__Model; AddSemanticKernelChatModel validates both.
+var openAi = new OpenAIChatOptions
+{
+    ApiKey = builder.Configuration["OpenAI:ApiKey"] ?? "",
+    Model = builder.Configuration["Chat:Model"] ?? ""
+};
+builder.Services.AddSemanticKernelChatModel(openAi);
+
 // Use cases (Application)
 builder.Services.AddScoped<ISearchGuidesUseCase>(sp =>
     new SearchGuidesUseCase(sp.GetRequiredService<IVector>(), topK));
+builder.Services.AddScoped<ITalkToModelUseCase, TalkToModelUseCase>();
 
 // Add services to the container.
 

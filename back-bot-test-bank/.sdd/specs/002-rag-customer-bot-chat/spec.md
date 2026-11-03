@@ -32,22 +32,22 @@ A customer of "Bank Test" sends a message to the API and gets an answer in the l
 ## Touches
 - `Domain/`: `ChatMessage`, `ChatTurn`, output ports `IChatModel` and `IConversationStore`.
 - `Application/`: `AskQuestionUseCase` (query rewriting, score gate, prompt building, language handling, history trimming) with its own DTOs.
-- `Infra.AI.*` project: the Semantic Kernel chat model and conversation store (name to decide).
+- `Infra.AI.SemanticKernel` project: the Semantic Kernel chat model and conversation store.
 - `Api/`: `ChatController`, its DTOs, DI and configuration in `Program.cs`.
 - Rules prompt file (editable without recompiling), loaded at startup.
 
 ## Decisions
 - Stateful conversation: the server keeps the history per `conversationId`, in memory behind `IConversationStore`, so a durable store can replace it later. Semantic Kernel's `ChatHistory` and its history reducer manage the turns. Prefer library features over manual code.
 - Hexagonal boundary: all bot logic (query rewriting, score gate, prompt building, language handling, conversation flow) lives in `Application` and references no library or vendor. It reaches the outside only through `IChatModel`, `IConversationStore` and `IVector` (spec 001).
-- Chat model is swappable: OpenAI today through the Semantic Kernel connector in `Infra.AI.*`; Anthropic, Llama or another model later by adding an adapter and changing configuration. Domain and Application do not change.
+- Chat model is swappable: OpenAI today through the Semantic Kernel connector in `Infra.AI.SemanticKernel`; Anthropic, Llama or another model later by adding an adapter and changing configuration. Domain and Application do not change.
 - Configuration, not code: `TopK` (`Chat__TopK`), `MinScore` (`Chat__MinScore`, provisional 0.30), history length (`Chat__HistoryTurns`, proposed 6), conversation idle expiry (`Chat__ConversationIdleMinutes`, proposed 30, pending confirmation), model (`Chat__Model`, `gpt-4o-mini`). The proposed values are documented here, not hardcoded.
 - Rate limit from spec 001 (5 requests per minute per client IP) applies to `POST /Chat` as well; the chat endpoint uses the same `TooManyRequests` response.
 - Errors: chat model failures map to the codes of spec 001 (`Unreachable`, `Timeout`, `Rejected`, `RateLimited`, `Unavailable`, `Malformed`). There is no separate chat exception; the Api table gives the response.
 - English is the priority language: the rules prompt, the fixed handoff message ("Understood. I'm connecting you with a customer service agent who can help you with this.") and the language fallback are in English. The English reminder repeats at the end of the user message, as in the reference, because Spanish context otherwise pulls the model into Spanish.
 - The fixed handoff message is English for every language (no model call). Localizing it by detected language is deferred.
 - The guides are assumed to be Spanish; the search is multilingual and the model translates. Unit tests check that the prompt asks for an English reply; whether the real model answers in English is verified manually before the evaluation (HP-2).
-- Tests: unit tests for `Application` logic (prompt, score gate, rewriting, history, language) with mocked ports. The `Infra.AI.*` adapter has stubbed-HTTP tests only for its decisions (error mapping, message roles); pass-through calls are verified manually. No real network calls in tests.
-- Open: use the Semantic Kernel OpenAI connector for chat completion (assumed yes). The name of the `Infra.AI.*` project is to be decided.
+- Tests: unit tests for `Application` logic (prompt, score gate, rewriting, history, language) with mocked ports. The `Infra.AI.SemanticKernel` adapter has stubbed-HTTP tests only for its decisions (error mapping, message roles); pass-through calls are verified manually. No real network calls in tests.
+- Decided: Semantic Kernel's OpenAI connector (`Microsoft.SemanticKernel.Connectors.OpenAI`) does the chat completion, in the project `Infra.AI.SemanticKernel` (named by the developer).
 
 ## Notes
 - Spec 001 holds the search, the error contract and the shared decisions. Phase numbers continue from spec 001 so references stay stable.

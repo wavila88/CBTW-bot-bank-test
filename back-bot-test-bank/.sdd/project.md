@@ -1,18 +1,18 @@
 # Project: back-bot-test-bank
 
 > **IMPORTANT — mandatory for every change.** Read this whole file before editing code. Configuration values come from environment variables (no hardcoded defaults in code). The hexagonal dependency rules apply. Tests follow the conventions below. A change that breaks any of them is not done.
-Sources read: CLAUDE.md, README.md, *.csproj (Api, Application, Domain, Infra.Vector.Pinne, Tests), back-bot-test-bank.sln, Api/Program.cs, Api/Properties/launchSettings.json
+Sources read: CLAUDE.md, README.md, *.csproj (Api, Application, Domain, Infra.Vector.Pinne, Infra.AI.SemanticKernel, Tests), back-bot-test-bank.sln, Api/Program.cs, Api/Properties/launchSettings.json
 Last scan: 2026-11-01 (updated after removing the `Register` sample, spec 001 phase 1)
 
 ## Stack
 - C# on .NET 8 (`net8.0`), nullable + implicit usings enabled in all projects (← Api/Api.csproj, Domain/Domain.csproj)
 - ASP.NET Core Web API with controllers (← Api/Api.csproj `Microsoft.NET.Sdk.Web`, Api/Program.cs `AddControllers`)
 - Swashbuckle.AspNetCore 6.6.2 for Swagger (← Api/Api.csproj)
-- No other libraries in the production projects yet (← all *.csproj)
+- `Microsoft.SemanticKernel.Connectors.OpenAI` 1.81, only in `Infra.AI.SemanticKernel` (← Infra.AI.SemanticKernel/Infra.AI.SemanticKernel.csproj)
 
 ## Planned decisions (from specs, not yet in code)
 - Pure hexagon: `Application` references only `Domain`, never an external package (no Semantic Kernel, no vendor SDK). All bot logic lives in `Application` and calls out through our own ports in `Domain` (← .sdd/specs/001-guide-search/spec.md)
-- Microsoft Semantic Kernel is the chosen library for conversation state (`ChatHistory` + history reducer) and chat completion. Prefer library features over manual code, but only inside adapters: one project per adapter: `Infra.Vector.Pinne` for Pinecone and an `Infra.AI.*` project for Semantic Kernel (name to decide) (← .sdd/specs/002-rag-customer-bot-chat/spec.md)
+- Microsoft Semantic Kernel is the chosen library for conversation state (`ChatHistory` + history reducer) and chat completion. Prefer library features over manual code, but only inside adapters: one project per adapter: `Infra.Vector.Pinne` for Pinecone and an `Infra.AI.SemanticKernel` project for Semantic Kernel (← .sdd/specs/002-rag-customer-bot-chat/spec.md)
 - Model and vector store are swappable by configuration: a new provider means a new adapter project (`Infra.<Kind>.<Name>`) plus a config value (← .sdd/specs/002-rag-customer-bot-chat/spec.md)
 - Conversations are kept server-side by `conversationId`, in memory behind a port (← .sdd/specs/002-rag-customer-bot-chat/spec.md)
 - English is the priority reply language; the default and fallback is English (← .sdd/specs/002-rag-customer-bot-chat/spec.md)
@@ -37,10 +37,10 @@ Carried over from the removed `Register` sample; follow them in new code.
 - One shape per layer (Api DTO, Application DTO, Domain model), mapped manually, no mapper library
 - Block-scoped namespaces matching the folder (e.g. `namespace Tests { ... }`)
 - Controllers: `[ApiController]`, `[Route("[controller]")]`, `ILogger<T>` injected
-- Error handling: implemented in spec 001 phase 3a (one table in `Api/Errors`); Pinecone failure codes come in phase 3b, pending
+- Error handling: spec 001 phase 3a (one table in `Api/Errors`); rate limit: spec 001 phase 3c (`TooManyRequests`, one global limiter)
 
 ## Configuration
-- Environment-specific values (keys, index name, namespace, embedding model, dimension, TopK, host) come from environment variables, e.g. `Pinecone__ApiKey`, `Pinecone__IndexName`, `Chat__TopK`. Never hardcode them in code or commit them in JSON.
+- Environment-specific values (keys, index name, namespace, embedding model, dimension, TopK, host) come from environment variables, e.g. `Pinecone__ApiKey`, `Pinecone__IndexName`, `OpenAI__ApiKey`, `Chat__Model`, `Chat__TopK`, `RateLimit__PermitLimit`. Never hardcode them in code or commit them in JSON.
 - `Api/appsettings.Local.json` is an optional, git-ignored local fallback; environment variables win. The committed template `appsettings.Local.example.json` holds placeholders only.
 - Code holds no defaults for these values. Startup validation names each missing setting (`PineconeOptions.Validate()`, `Chat:TopK` in `Api/Program.cs`).
 - Only protocol constants stay in code (Pinecone `ControlPlaneUrl`, `ApiVersion`).
@@ -51,14 +51,15 @@ Carried over from the removed `Register` sample; follow them in new code.
 ## Tests
 - Frameworks: xUnit 2.9 + Moq 4.20, unit tests only, no real network calls (← Tests/Tests.csproj, spec 001 Decisions)
 - What gets automated tests: logic with decisions in `Application` and the `Api` mapping/status codes, with mocked ports. `Infra` adapters get stubbed-HTTP tests only for behavior with decisions (ordering, missing metadata, query embedding, host caching); pass-through calls are verified manually through Development-only diagnostic endpoints (e.g. `GET /Search`) (← spec 001 Decisions)
-- Location and naming: `Tests/`, `<Subject>Tests.cs`, methods `Subject_Condition` (e.g. `AskQuestion_ReturnsModelAnswer`); the project has no tests yet (← Tests/Tests.csproj)
+- Location and naming: `Tests/`, `<Subject>Tests.cs`, methods `Subject_Condition` (e.g. `AskQuestion_ReturnsModelAnswer`) (← Tests/Tests.csproj)
 - Command: `dotnet test Tests/Tests.csproj`
 
 ## Run the app
-- `dotnet build back-bot-test-bank.sln` (the solution lists Api, Application, Domain, Infra.Vector.Pinne, Tests) (← back-bot-test-bank.sln)
+- `dotnet build back-bot-test-bank.sln` (the solution lists Api, Application, Domain, Infra.Vector.Pinne, Infra.AI.SemanticKernel, Tests) (← back-bot-test-bank.sln)
 - `dotnet run --project Api --launch-profile http` → http://localhost:5082/swagger (← Api/Properties/launchSettings.json)
 - `dotnet run --project Api --launch-profile https` → https://localhost:7283/swagger (← Api/Properties/launchSettings.json)
 - Diagnostic: `GET /Search?query=...&topK=5` (Development only) returns the guide fragments Pinecone finds (← Api/Controllers/SearchController.cs)
+- Diagnostic: `POST /Diagnostics/Chat` with `{"message":"..."}` (Development only) sends one message to the chat model and returns its reply (← Api/Controllers/DiagnosticsController.cs)
 
 ## Not detected / questions
 - Error-handling/logging conventions: set by spec 001 phase 3a (see Planned decisions and `Api/Errors`).
