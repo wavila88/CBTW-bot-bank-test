@@ -1,0 +1,15 @@
+# Dependencies and build output
+node_modules/
+dist/
+
+# Local settings: real values never go in git (.env.example has the names only)
+.env.local
+.env.*.local
+
+# Logs and editor files
+*.log
+.vscode/
+.vs/
+.idea/
+.DS_Store
+Thumbs.db
