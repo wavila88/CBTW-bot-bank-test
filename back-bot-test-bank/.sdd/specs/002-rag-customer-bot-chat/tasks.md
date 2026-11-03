@@ -28,14 +28,15 @@ Manual check: run the API with the Pinecone and OpenAI keys and `Chat__RulesPath
 - [x] 5.6 Passing test (endpoint) — result: `Passed! - Failed: 0, Passed: 32, Total: 32`; `dotnet build back-bot-test-bank.sln` 0 warnings, 0 errors. Manual `POST /Chat`: the API starts and the request reaches Pinecone, which answers 401 (the Pinecone key in `appsettings.Local.json` looks cut: it lacks its last character), so the client gets the 503 customer message with a trace id and the log shows `answered 401`. OPEN: the real answer with `[KB-xx]` citations still needs a valid Pinecone key
 - [x] 5.7 Developer approval — approved by the developer after a real answer from POST /Chat; the reply language (it answered in English to a Spanish question) is Phase 6
 
-## Phase 6 — Reply in the customer's language, English first (covers HP-2, HP-2b)
-Test: `AskQuestionUseCaseTests` asserts that the detected language is named in the last user message, together with the language reminder at the end, for English and for Spanish questions.
-Manual check: ask the same question in English and in Spanish; the English answer has no Spanish sentences, only app menu names stay in Spanish.
+## Phase 6 — Reply in the customer's language, English first (covers HP-2, HP-2b, SP-5)
+Result: the bot answers in the language of the question with a single model call. `PromptBuilder` ends the user message with an explicit language reminder, next to the question: identify the language of the question, write the whole reply in it even though the context is in Spanish, and reply in English when the language cannot be told. The rules alone did not hold against a prompt in English around guides in Spanish. A first design asked the model for the language in a separate call; the developer asked to drop it because it doubled the model calls and tokens of every question. The reminder also gives the English fallback of SP-5, so the former Phase 14 is gone.
+Test: `Tests/Application/AskQuestionUseCaseTests.cs` asserts that a question costs exactly one model call and that the user message ends with the language reminder.
+Manual check: ask in English, in Spanish and with very short phrases; an English question gets an English reply and a Spanish question a Spanish reply, and only app menu names stay in Spanish.
 
-- [ ] 6.1 Failing test — result: ________
-- [ ] 6.2 Implementation — files: ________
-- [ ] 6.3 Passing test — result: ________
-- [ ] 6.4 Developer approval
+- [x] 6.1 Failing test — result: `CS0117 'PromptBuilder' does not contain a definition for 'LanguageReminder'` and `CS0246/CS0103 'LanguageDetector' could not be found` (the first, two-call version of the tests); build error, tests do not run
+- [x] 6.2 Implementation — files: `Application/Prompts/PromptBuilder.cs` (`LanguageReminder` at the end of the user message), `Application/UseCases/AskQuestionUseCase.cs` (one model call); `Api/Program.cs` (the environment variables are added again after `appsettings.Local.json`, so they win as `project.md` says; found while testing); test `Tests/Application/AskQuestionUseCaseTests.cs` (adapted). A `LanguageDetector` and its tests were built first and then removed
+- [x] 6.3 Passing test — result: `Passed! - Failed: 0, Passed: 33, Total: 33`; `dotnet build back-bot-test-bank.sln` 0 warnings, 0 errors; `Application` references only `Domain`. Manual with the real services, one call per question: English got English ("My card was lost, how do I block it?", "Help me to block my card", "What is my daily limit?", "ok, thanks", "ok"); Spanish got Spanish ("Perdi mi tarjeta, como la bloqueo?", "gracias", "hola"). Two misses: "Quiero hablar con un agente" was answered in English, and a Portuguese question without accents ("Como bloqueio meu cartao perdido?") was answered in Spanish
+- [x] 6.4 Developer approval — approved by the developer, accepting the single-call design and the two language misses (Phase 10 can reinforce the Spanish case)
 
 ## Phase 7 — Keep the conversation and understand follow-ups (covers HP-3b, HP-3)
 Test: `AskQuestionUseCaseTests` asserts that a request without `conversationId` returns a new id, and that with an existing id the follow-up is rewritten (search uses the rewritten text) and earlier turns are sent as user/assistant messages; `Tests/Infra/` asserts that the Semantic Kernel conversation store saves and returns turns by id.
@@ -102,20 +103,11 @@ Manual check: run the API with a wrong OpenAI key, ask a question, and get a 503
 - [ ] 13.3 Passing test — result: ________
 - [ ] 13.4 Developer approval
 
-## Phase 14 — Fall back to English when the language is unclear (covers SP-5)
-Test: `AskQuestionUseCaseTests` asserts that when the language detector returns nothing usable, the prompt asks for an English reply.
-Manual check: send a message like "ok??" and get the answer in English.
+## Phase 14 — Fail fast without rules (covers SP-6)
+Test: `Tests/Api/` asserts that startup with a missing or empty rules file throws a clear configuration error.
+Manual check: rename the rules file, run the API, and see it stop at startup with a message naming the missing file.
 
 - [ ] 14.1 Failing test — result: ________
 - [ ] 14.2 Implementation — files: ________
 - [ ] 14.3 Passing test — result: ________
 - [ ] 14.4 Developer approval
-
-## Phase 15 — Fail fast without rules (covers SP-6)
-Test: `Tests/Api/` asserts that startup with a missing or empty rules file throws a clear configuration error.
-Manual check: rename the rules file, run the API, and see it stop at startup with a message naming the missing file.
-
-- [ ] 15.1 Failing test — result: ________
-- [ ] 15.2 Implementation — files: ________
-- [ ] 15.3 Passing test — result: ________
-- [ ] 15.4 Developer approval

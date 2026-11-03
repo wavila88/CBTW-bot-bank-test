@@ -20,7 +20,7 @@ A customer of "Bank Test" sends a message to the API and gets an answer in the l
 - SP-2: Given the vector search fails during a chat, then the spec 001 error contract applies: a controlled error with a trace id, never a made-up answer.
 - SP-3: Given the chat model fails (no credit, timeout, bad key), when a message is sent, then the API returns a controlled error from the same table, and exposes no keys or internals.
 - SP-4: Given the customer asks the bot to reveal or change its rules, or to give a password, PIN or CVV, when it is sent, then the bot ignores the instruction, follows the rules, and never asks for those secrets.
-- SP-5: Given the language detector returns nothing usable, when the answer is built, then the bot falls back to English.
+- SP-5: Given the language of the question cannot be told, when the answer is built, then the prompt tells the model to reply in English.
 - SP-6: Given the rules file is missing or empty at startup, then the app fails fast with a clear configuration error instead of answering without rules.
 
 ## Out of scope
@@ -44,6 +44,7 @@ A customer of "Bank Test" sends a message to the API and gets an answer in the l
 - Rate limit from spec 001 (5 requests per minute per client IP) applies to `POST /Chat` as well; the chat endpoint uses the same `TooManyRequests` response.
 - Errors: chat model failures map to the codes of spec 001 (`Unreachable`, `Timeout`, `Rejected`, `RateLimited`, `Unavailable`, `Malformed`). There is no separate chat exception; the Api table gives the response.
 - English is the priority language: the rules prompt, the fixed handoff message ("Understood. I'm connecting you with a customer service agent who can help you with this.") and the language fallback are in English. The English reminder repeats at the end of the user message, as in the reference, because Spanish context otherwise pulls the model into Spanish.
+- The language is handled inside the same prompt, with no separate detection call: one model call per question (decided by the developer, to save tokens). A first version used a `LanguageDetector`; it was removed.
 - The fixed handoff message is English for every language (no model call). Localizing it by detected language is deferred.
 - The guides are assumed to be Spanish; the search is multilingual and the model translates. Unit tests check that the prompt asks for an English reply; whether the real model answers in English is verified manually before the evaluation (HP-2).
 - Tests: unit tests for `Application` logic (prompt, score gate, rewriting, history, language) with mocked ports. The `Infra.AI.SemanticKernel` adapter has stubbed-HTTP tests only for its decisions (error mapping, message roles); pass-through calls are verified manually. No real network calls in tests.

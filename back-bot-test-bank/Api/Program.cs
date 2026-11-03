@@ -11,6 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Settings come from environment variables (Pinecone__ApiKey, Chat__TopK, ...). appsettings.Local.json is an
 // optional git-ignored fallback; environment variables win. Read once at startup.
 builder.Configuration.AddJsonFile("appsettings.Local.json", optional: true, reloadOnChange: false);
+// A source added later wins, so the environment variables are added again after the local file.
+builder.Configuration.AddEnvironmentVariables();
 
 var pinecone = builder.Configuration.GetSection("Pinecone").Get<PineconeOptions>() ?? new PineconeOptions();
 pinecone.Validate();

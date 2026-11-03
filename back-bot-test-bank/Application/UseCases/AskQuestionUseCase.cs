@@ -9,7 +9,6 @@ namespace Application.UseCases
     {
         public async Task<AnswerDTO> ExecuteAsync(string question, CancellationToken ct = default)
         {
-
             var chunks = await vector.SearchAsync(question.Trim(), topK, ct);
             var reply = await model.CompleteAsync(PromptBuilder.Build(rules, question, chunks), ct);
 

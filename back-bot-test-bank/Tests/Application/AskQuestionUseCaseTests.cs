@@ -1,3 +1,4 @@
+using Application.Prompts;
 using Application.UseCases;
 using Domain.Models;
 using Domain.Ports;
@@ -19,14 +20,16 @@ namespace Tests.Application
 
         private readonly Mock<IVector> vector = new();
         private readonly Mock<IChatModel> model = new();
-        private IReadOnlyList<ChatMessage>? sent;
+
+        // Every call to the model, in order.
+        private readonly List<IReadOnlyList<ChatMessage>> calls = new();
 
         public AskQuestionUseCaseTests()
         {
             vector.Setup(v => v.SearchAsync(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(Chunks);
             model.Setup(m => m.CompleteAsync(It.IsAny<IReadOnlyList<ChatMessage>>(), It.IsAny<CancellationToken>()))
-                .Callback<IReadOnlyList<ChatMessage>, CancellationToken>((messages, _) => sent = messages)
+                .Callback<IReadOnlyList<ChatMessage>, CancellationToken>((messages, _) => calls.Add(messages))
                 .ReturnsAsync("  Open Card > Block. [KB-03]  ");
         }
 
@@ -45,7 +48,8 @@ namespace Tests.Application
         {
             await UseCase().ExecuteAsync(Question);
 
-            Assert.Equal(ChatRole.System, sent![0].Role);
+            var sent = Assert.Single(calls);
+            Assert.Equal(ChatRole.System, sent[0].Role);
             Assert.Equal(Rules, sent[0].Content);
         }
 
@@ -54,7 +58,8 @@ namespace Tests.Application
         {
             await UseCase().ExecuteAsync(Question);
 
-            var prompt = sent![sent.Count - 1];
+            var sent = Assert.Single(calls);
+            var prompt = sent[sent.Count - 1];
             Assert.Equal(ChatRole.User, prompt.Role);
             foreach (var chunk in Chunks)
             {
@@ -73,6 +78,16 @@ namespace Tests.Application
             Assert.Equal("Open Card > Block. [KB-03]", answer.Text);
             Assert.Equal(new[] { "KB-01-s2", "KB-03-q1" }, answer.Sources.Select(s => s.Id));
             Assert.Equal(new[] { 0.81, 0.52 }, answer.Sources.Select(s => s.Score));
+        }
+
+        // The language is asked for inside the same prompt, so a question costs one model call, not two.
+        [Fact]
+        public async Task ExecuteAsync_CallsTheModelOnceAndEndsThePromptWithTheLanguageReminder()
+        {
+            await UseCase().ExecuteAsync(Question);
+
+            var sent = Assert.Single(calls);
+            Assert.EndsWith(PromptBuilder.LanguageReminder, sent[sent.Count - 1].Content);
         }
     }
 }
