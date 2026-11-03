@@ -17,6 +17,11 @@ pinecone.Validate();
 var topK = builder.Configuration.GetValue<int?>("Chat:TopK")
     ?? throw new InvalidOperationException("Missing setting Chat__TopK.");
 
+// The rules for the chat model live in a file, so they can be edited without recompiling.
+var rulesPath = builder.Configuration["Chat:RulesPath"]
+    ?? throw new InvalidOperationException("Missing setting Chat__RulesPath.");
+var rules = File.ReadAllText(Path.Combine(builder.Environment.ContentRootPath, rulesPath));
+
 // Adapters (Infra) behind the Domain ports.
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<IVector>(sp =>
@@ -33,7 +38,8 @@ builder.Services.AddSemanticKernelChatModel(openAi);
 // Use cases (Application)
 builder.Services.AddScoped<ISearchGuidesUseCase>(sp =>
     new SearchGuidesUseCase(sp.GetRequiredService<IVector>(), topK));
-builder.Services.AddScoped<ITalkToModelUseCase, TalkToModelUseCase>();
+builder.Services.AddScoped<IAskQuestionUseCase>(sp =>
+    new AskQuestionUseCase(sp.GetRequiredService<IVector>(), sp.GetRequiredService<IChatModel>(), rules, topK));
 
 // Add services to the container.
 

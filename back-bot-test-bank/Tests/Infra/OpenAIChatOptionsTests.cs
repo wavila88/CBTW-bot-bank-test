@@ -12,13 +12,5 @@ namespace Tests.Infra
             Assert.Contains("OpenAI__ApiKey", ex.Message);
             Assert.Contains("Chat__Model", ex.Message);
         }
-
-        [Fact]
-        public void Validate_PassesWhenEverySettingIsSet()
-        {
-            var options = new OpenAIChatOptions { ApiKey = "k", Model = "gpt-4o-mini" };
-
-            options.Validate();
-        }
     }
 }

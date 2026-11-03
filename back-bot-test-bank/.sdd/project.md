@@ -59,7 +59,6 @@ Carried over from the removed `Register` sample; follow them in new code.
 - `dotnet run --project Api --launch-profile http` → http://localhost:5082/swagger (← Api/Properties/launchSettings.json)
 - `dotnet run --project Api --launch-profile https` → https://localhost:7283/swagger (← Api/Properties/launchSettings.json)
 - Diagnostic: `GET /Search?query=...&topK=5` (Development only) returns the guide fragments Pinecone finds (← Api/Controllers/SearchController.cs)
-- Diagnostic: `POST /Diagnostics/Chat` with `{"message":"..."}` (Development only) sends one message to the chat model and returns its reply (← Api/Controllers/DiagnosticsController.cs)
 
 ## Not detected / questions
 - Error-handling/logging conventions: set by spec 001 phase 3a (see Planned decisions and `Api/Errors`).

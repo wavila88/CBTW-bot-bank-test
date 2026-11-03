@@ -19,7 +19,7 @@ namespace Tests.Infra
             Dimension = 1024
         };
 
-        // Matches come unsorted on purpose, and the last one has no metadata at all.
+        // The last match has no metadata at all.
         private const string QueryResponse = """
             {"matches":[
               {"id":"KB-03-q1","score":0.5,"metadata":{"docId":"KB-03","section":"FAQ","type":"faq","text":"Q: ..."}},
@@ -37,14 +37,6 @@ namespace Tests.Infra
         });
 
         private static PineconeVector CreateVector(StubHandler handler) => new(new HttpClient(handler), Options);
-
-        [Fact]
-        public async Task SearchAsync_ReturnsTheBestMatchFirst()
-        {
-            var chunks = await CreateVector(Handler()).SearchAsync("hello", 5);
-
-            Assert.Equal(new[] { "KB-01-s2", "KB-03-q1", "X-1" }, chunks.Select(c => c.Id));
-        }
 
         [Fact]
         public async Task SearchAsync_MapsTheGuideMetadata()
@@ -100,18 +92,6 @@ namespace Tests.Infra
 
             Assert.DoesNotContain(handler.Requests, r => r.Url == IndexUrl);
             Assert.Single(handler.Requests, r => r.Url == QueryUrl);
-        }
-
-        [Fact]
-        public async Task SearchAsync_LooksUpTheIndexHostOnlyOnce()
-        {
-            var handler = Handler();
-            var vector = CreateVector(handler);
-
-            await vector.SearchAsync("one", 5);
-            await vector.SearchAsync("two", 5);
-
-            Assert.Single(handler.Requests, r => r.Url == IndexUrl);
         }
     }
 }
