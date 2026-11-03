@@ -6,5 +6,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    // Vitest returns CSS as an empty string unless told otherwise; the tokens test reads tokens.css.
+    css: { include: [/tokens\.css/] },
   },
 });

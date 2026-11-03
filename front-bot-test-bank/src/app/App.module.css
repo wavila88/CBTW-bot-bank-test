@@ -1,0 +1,27 @@
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-20);
+  height: var(--layout-header-height);
+  padding: 0 var(--space-28);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.brand {
+  color: var(--color-navy);
+  font-size: var(--font-size-22);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-brand);
+}
+
+.divider {
+  width: 1px;
+  height: 28px;
+  background: var(--color-border);
+}
+
+.service {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-14);
+}

@@ -7,7 +7,8 @@ Last scan: 2026-11-03, by hand after phase 1 of spec 001. Run `/sdd:scan` again 
 
 ## Design
 - Figma file `gzN0JJqE4heyyz0kKTufXN`, frame `2:679` "Bank Test · Asistente de atención" (1440 × 1000, desktop only), read through the Figma MCP (`claude.ai Figma`). Layout: a header of 80 px, a side menu of 232 px, the chat of 888 px and the help center column of 320 px.
-- Implement from the real design with the Figma tools (`get_design_context`, loading the `figma-design-to-code` skill first), not from a screenshot. Take colors, spacing and type from the file's variables and styles into CSS variables.
+- Implement from the real design with the Figma tools (`get_design_context`, loading the `figma-design-to-code` skill first), not from a screenshot. Take colors, spacing and type into the CSS variables of `tokens.css`; features use those variables and never hardcode a value.
+- The Figma file defines no variables (`get_variable_defs` returns nothing), so the tokens were read from the values of the frame. If the designer adds variables later, update `tokens.css` from them.
 
 ## Stack
 - React 19 with TypeScript 7, strict mode (`package.json`, `tsconfig.json`)
@@ -16,9 +17,10 @@ Last scan: 2026-11-03, by hand after phase 1 of spec 001. Run `/sdd:scan` again 
 - Build tool: Vite 8 (`vite.config.ts`)
 - Tests: Vitest 5 with React Testing Library and `@testing-library/jest-dom`, in a `jsdom` environment (`vite.config.ts`, `src/test/setup.ts`)
 - Package manager: npm; Node 20 or newer (`engines` in `package.json`; developed on Node 24)
+- Styling: CSS Modules (`*.module.css`) that use the design's tokens as CSS variables from `src/shared/styles/tokens.css`; global rules in `src/shared/styles/global.css`; no UI kit (spec 001 phase 2)
+- Font: Inter, self-hosted through `@fontsource-variable/inter`, so no request goes to a third party (`src/main.tsx`)
 
 ## Planned decisions (proposed defaults, not in code yet)
-- Styling: CSS Modules with CSS variables for the design tokens (colors, spacing, type), no UI kit, so the Figma design is followed closely.
 - Answer rendering: a markdown renderer that never renders raw HTML (the API answers carry numbered lists, bold text and code-style menu names).
 - The dependency rules below are enforced by a lint rule on imports, so a violation fails the check by itself and nobody has to remember this file.
 
@@ -47,6 +49,7 @@ Last scan: 2026-11-03, by hand after phase 1 of spec 001. Run `/sdd:scan` again 
 - Frameworks: Vitest with React Testing Library; no real calls to the API. Automated tests only where they add value (state logic, error handling, rendering of answers, the dependency rules).
 - Location and naming: next to the code, `<Subject>.test.ts` or `.test.tsx` (e.g. `src/app/App.test.tsx`); helpers in `src/test/`.
 - Command: `npm test` (`vitest run`; `npm run test:watch` while developing). Run from the project folder.
+- Vitest returns CSS as an empty text unless told otherwise; `vite.config.ts` lets it read `tokens.css` (`test.css.include`) for the tokens test.
 
 ## Run the app
 - `npm install`, then `npm run dev`: the address is printed in the terminal (Vite's default is http://localhost:5173).

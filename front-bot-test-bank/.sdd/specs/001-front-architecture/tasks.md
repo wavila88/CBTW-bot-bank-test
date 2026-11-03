@@ -19,10 +19,10 @@ Result: the colors, type scale, spacing and radii of the Figma frame `2:679` exi
 Test: `src/shared/styles/tokens.test.ts` asserts that the key tokens (primary blue, surfaces, text colors, border, radius, font family) have the values read from the Figma file, so a stray edit is noticed. The rest of the values are checked by eye against the design.
 Manual check: open the page next to the Figma frame; the font and the main colors match.
 
-- [ ] 2.1 Failing test — result: ________
-- [ ] 2.2 Implementation — files: ________
-- [ ] 2.3 Passing test — result: ________
-- [ ] 2.4 Developer approval
+- [x] 2.1 Failing test — result: `FAIL src/shared/styles/tokens.test.ts — Error: Failed to resolve import "./tokens.css?raw"` (the stylesheet does not exist yet). The Figma file defines no variables (`get_variable_defs` returned `{}`), so the values were read from the frame with `get_design_context`
+- [x] 2.2 Implementation — files: `src/shared/styles/tokens.css` (colors, type, spacing, radii and layout of frame 2:679), `src/shared/styles/global.css`, `src/app/App.module.css`, `src/app/App.tsx` (the header of the design built with the tokens), `src/main.tsx` (loads the font and the two stylesheets), `vite.config.ts` (`test.css.include` so the test can read `tokens.css`), `package.json` (`@fontsource-variable/inter`); test `src/shared/styles/tokens.test.ts`. The first page keeps the heading "Bank Test"; the emblem and the right side of the header come with spec 002
+- [x] 2.3 Passing test — result: `Test Files 2 passed (2), Tests 4 passed (4)`; `npm run build` ends without errors. Visual check with a screenshot of the running page next to the design's header: white 80 px bar with its bottom border, "Bank Test" in navy bold 22 px with tight spacing, the divider, "Customer support" in muted gray, and the `#f5f7fb` background below, in Inter. The first run of the test failed with `{}` because Vitest returns CSS as empty text; fixed in the configuration, not in the test
+- [x] 2.4 Developer approval — approved by the developer
 
 ## Phase 3 — The API address comes from the environment (covers SP-1)
 Result: `src/shared/config` reads `VITE_API_BASE_URL`, validates it, and exposes it. If it is missing or not a valid URL, the page does not start the app: it shows an error that names the variable. A committed `.env.example` lists the name with no value, and `.env.local` stays out of git.

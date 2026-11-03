@@ -1,0 +1,75 @@
+/*
+  Design tokens of the Bank Test support chat.
+  Source: Figma file gzN0JJqE4heyyz0kKTufXN, frame 2:679. The file defines no variables,
+  so each value was read from the frame. Features use these variables, never hardcoded values.
+*/
+:root {
+  /* Colors */
+  --color-primary: #155bc1;
+  --color-primary-tint: #edf4fe;
+  --color-navy: #102e52;
+  --color-navy-active: #23486f;
+  --color-background: #f5f7fb;
+  --color-surface: #ffffff;
+  --color-border: #dfe6ef;
+  --color-border-input: #8795a7;
+  --color-text: #172d47;
+  --color-text-muted: #5c6c80;
+  --color-text-on-navy: #ffffff;
+  --color-text-on-navy-muted: #c5d3e4;
+
+  /* Type */
+  --font-family: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-size-10: 10px;
+  --font-size-11: 11px;
+  --font-size-12: 12px;
+  --font-size-13: 13px;
+  --font-size-14: 14px;
+  --font-size-17: 17px;
+  --font-size-22: 22px;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height-normal: normal;
+  --line-height-150: 1.5;
+  --line-height-155: 1.55;
+  --line-height-160: 1.6;
+  --line-height-165: 1.65;
+  --line-height-170: 1.7;
+  --letter-spacing-brand: -0.6px;
+  --letter-spacing-label: 1.1px;
+  --letter-spacing-label-wide: 1.2px;
+
+  /* Spacing: named by its size in pixels, as the design uses it */
+  --space-5: 5px;
+  --space-6: 6px;
+  --space-7: 7px;
+  --space-8: 8px;
+  --space-9: 9px;
+  --space-10: 10px;
+  --space-11: 11px;
+  --space-12: 12px;
+  --space-13: 13px;
+  --space-14: 14px;
+  --space-16: 16px;
+  --space-18: 18px;
+  --space-20: 20px;
+  --space-22: 22px;
+  --space-24: 24px;
+  --space-26: 26px;
+  --space-28: 28px;
+  --space-32: 32px;
+
+  /* Radii: radius-tail is the small corner of a message bubble, next to its avatar */
+  --radius-tail: 2px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-full: 100px;
+
+  /* Layout of the 1440 x 1000 frame */
+  --layout-header-height: 80px;
+  --layout-sidebar-width: 232px;
+  --layout-help-width: 320px;
+}
