@@ -4,6 +4,7 @@ namespace Application.UseCases
 {
     public interface IAskQuestionUseCase
     {
-        Task<AnswerDTO> ExecuteAsync(string question, CancellationToken ct = default);
+        /// <param name="conversationId">The conversation to continue; a new one is started when it is null or unknown.</param>
+        Task<AnswerDTO> ExecuteAsync(string question, string? conversationId = null, CancellationToken ct = default);
     }
 }

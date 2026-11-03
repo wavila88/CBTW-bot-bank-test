@@ -36,12 +36,14 @@ var openAi = new OpenAIChatOptions
     Model = builder.Configuration["Chat:Model"] ?? ""
 };
 builder.Services.AddSemanticKernelChatModel(openAi);
+builder.Services.AddSemanticKernelConversationStore();
 
 // Use cases (Application)
 builder.Services.AddScoped<ISearchGuidesUseCase>(sp =>
     new SearchGuidesUseCase(sp.GetRequiredService<IVector>(), topK));
 builder.Services.AddScoped<IAskQuestionUseCase>(sp =>
-    new AskQuestionUseCase(sp.GetRequiredService<IVector>(), sp.GetRequiredService<IChatModel>(), rules, topK));
+    new AskQuestionUseCase(
+        sp.GetRequiredService<IVector>(), sp.GetRequiredService<IChatModel>(), sp.GetRequiredService<IConversationStore>(), rules, topK));
 
 // Add services to the container.
 

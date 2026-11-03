@@ -14,10 +14,11 @@ namespace Api.Controllers
         {
             // The message is not logged: it may hold something the customer should not see in logs.
             logger.LogInformation("Chat request received");
-            var answer = await askQuestion.ExecuteAsync(request.Message ?? string.Empty, ct);
+            var answer = await askQuestion.ExecuteAsync(request.Message ?? string.Empty, request.ConversationId, ct);
             return Ok(new ChatResponse(
                 answer.Text,
-                answer.Sources.Select(s => new SourceResponse(s.Id, s.Score)).ToList()));
+                answer.Sources.Select(s => new SourceResponse(s.Id, s.Score)).ToList(),
+                answer.ConversationId));
         }
     }
 }

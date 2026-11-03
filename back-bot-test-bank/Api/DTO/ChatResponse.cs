@@ -1,4 +1,4 @@
 namespace Api.DTO
 {
-    public sealed record ChatResponse(string Answer, IReadOnlyList<SourceResponse> Sources);
+    public sealed record ChatResponse(string Answer, IReadOnlyList<SourceResponse> Sources, string ConversationId);
 }

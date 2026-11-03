@@ -1,4 +1,4 @@
 namespace Api.DTO
 {
-    public sealed record ChatRequest(string? Message);
+    public sealed record ChatRequest(string? Message, string? ConversationId);
 }

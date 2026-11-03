@@ -13,5 +13,12 @@ namespace Infra.AI.SemanticKernel
             services.AddSingleton<IChatModel>(_ => new SemanticKernelChatModel(new OpenAIChatCompletionService(options.Model, options.ApiKey)));
             return services;
         }
+
+        // Registers the in-memory conversation store. One instance for the whole app, so every request sees the same conversations.
+        public static IServiceCollection AddSemanticKernelConversationStore(this IServiceCollection services)
+        {
+            services.AddSingleton<IConversationStore, SemanticKernelConversationStore>();
+            return services;
+        }
     }
 }
