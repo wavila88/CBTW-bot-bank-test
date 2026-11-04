@@ -22,7 +22,6 @@ Last scan: 2026-11-03, by hand after phase 1 of spec 001. Run `/sdd:scan` again 
 
 ## Planned decisions (proposed defaults, not in code yet)
 - Answer rendering: a markdown renderer that never renders raw HTML (the API answers carry numbered lists, bold text and code-style menu names).
-- The dependency rules below are enforced by a lint rule on imports, so a violation fails the check by itself and nobody has to remember this file.
 
 ## Architecture (feature-based)
 - `src/app/`: the entry, the providers and the page that composes the features.
@@ -33,7 +32,7 @@ Last scan: 2026-11-03, by hand after phase 1 of spec 001. Run `/sdd:scan` again 
   - A feature can import `shared`, never another feature's internals; it talks to other features only through their `index.ts`.
   - `shared` imports nothing from `features` or `app`.
 - State: one React Context per feature, with a reducer (`useReducer`) for its state and actions, created with `createFeatureContext(name, reducer, initialState)` from `src/shared/context` in the feature's `context/` folder. It returns the `Provider` and the hook `useFeature()` (`{ state, dispatch }`); reading the hook outside its provider throws a message naming `<NameProvider>`. Providers are composed in `src/app/AppProviders.tsx`. No global store.
-- What a feature exposes: only its `index.ts` (its provider, its hook, its top components and types). Nothing else is imported from outside the feature; spec 001 phase 6 enforces it with a lint rule.
+- What a feature exposes: only its `index.ts` (its provider, its hook, its top components and types). Nothing else is imported from outside the feature.
 
 ## Backend contract (back-bot-test-bank)
 - `POST /Chat`, body `{ "message": string, "conversationId"?: string }`. Answer `{ "answer": string, "sources": [{ "id": string, "score": number }], "conversationId": string }`. The first message has no `conversationId`; the answer returns one, and every follow-up must send it back.
@@ -59,8 +58,8 @@ Last scan: 2026-11-03, by hand after phase 1 of spec 001. Run `/sdd:scan` again 
 
 ## Run the app
 - `npm install`, then `npm run dev`: the address is printed in the terminal (Vite's default port is 5173, served over HTTPS with a self-signed certificate, so the browser asks to accept it once: https://localhost:5173).
-- `npm run build`: type check (`tsc --noEmit`) and production bundle in `dist/`. Lint joins this command in spec 001 phase 6.
+- `npm run build`: type check (`tsc --noEmit`) and production bundle in `dist/`.
 - `npm run preview`: serves the production bundle.
 
 ## Not detected / questions
-- Styling approach, markdown renderer and the lint rule for the dependency rules are proposals above; none is installed yet.
+- The markdown renderer is a proposal above (spec 002 phase 4); it is not installed yet.
