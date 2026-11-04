@@ -1,12 +1,12 @@
 import '@fontsource-variable/inter';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { App } from './app/App';
+import { Root } from './app/Root';
 import './shared/styles/tokens.css';
 import './shared/styles/global.css';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <Root env={import.meta.env} />
   </StrictMode>,
 );

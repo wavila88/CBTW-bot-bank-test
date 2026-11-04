@@ -26,13 +26,13 @@ Manual check: open the page next to the Figma frame; the font and the main color
 
 ## Phase 3 — The API address comes from the environment (covers SP-1)
 Result: `src/shared/config` reads `VITE_API_BASE_URL`, validates it, and exposes it. If it is missing or not a valid URL, the page does not start the app: it shows an error that names the variable. A committed `.env.example` lists the name with no value, and `.env.local` stays out of git.
-Test: `src/shared/config/config.test.ts` asserts that a missing value and an invalid URL fail with a message naming `VITE_API_BASE_URL`, and that a valid URL is accepted.
+Test: `src/shared/config/config.test.ts` asserts that a missing value, an invalid URL and an address that is not http or https fail with a message naming `VITE_API_BASE_URL`, and that a valid URL is accepted without its trailing slash. `src/app/Root.test.tsx` asserts what the page shows: with a missing address, an alert that names the variable and no app; with a valid one, the app.
 Manual check: start the app without the variable and read the error on the page; create `.env.local` with the address of the backend and the app loads.
 
-- [ ] 3.1 Failing test — result: ________
-- [ ] 3.2 Implementation — files: ________
-- [ ] 3.3 Passing test — result: ________
-- [ ] 3.4 Developer approval
+- [x] 3.1 Failing test — result: `FAIL src/app/Root.test.tsx — Failed to resolve import "./Root"` and `FAIL src/shared/config/config.test.ts — Failed to resolve import "./config"`
+- [x] 3.2 Implementation — files: `src/shared/config/config.ts`, `src/app/Root.tsx`, `src/app/ConfigErrorPage.tsx`, `src/app/ConfigErrorPage.module.css`, `src/main.tsx`, `.env.example`, `src/test/setup.ts` (cleanup between tests)
+- [x] 3.3 Passing test — result: `Test Files 4 passed, Tests 14 passed`; `npm run build` OK; visual check in the browser: without the variable the page shows "Configuration error" naming `VITE_API_BASE_URL`; with `VITE_API_BASE_URL=http://localhost:5082` the app header loads
+- [x] 3.4 Developer approval
 
 ## Phase 4 — One client talks to the API (covers HP-6, SP-2, SP-3)
 Result: `src/shared/api` has a client that sends JSON to the configured base URL and returns the parsed body, typed. An error JSON `{ status, title, detail, traceId }` becomes an `ApiError` with the status, the customer message and the trace id. A connection failure or an answer that is not JSON becomes a typed error of kind "network" or "unexpected", never a raw exception. A dev script `npm run api:check` uses the same client to call `POST /Chat` from the terminal, so the contract can be tried without the browser (the backend still needs its CORS change for that).

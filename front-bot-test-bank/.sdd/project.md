@@ -44,12 +44,15 @@ Last scan: 2026-11-03, by hand after phase 1 of spec 001. Run `/sdd:scan` again 
 ## Configuration
 - The API base URL comes from an environment variable (`VITE_API_BASE_URL` with Vite). Never hardcode a URL.
 - `.env.local` is git-ignored; a committed `.env.example` lists the names only, with no values.
+- `src/shared/config/readConfig(env)` is the only place that reads and validates the variables (trailing slash removed, only http/https). Code asks it for the value; it never reads `import.meta.env` directly.
+- `src/app/Root` checks the settings before starting the app; if one is wrong it shows `ConfigErrorPage`, which names the variable. A new required variable is added to `readConfig` and to `.env.example`.
 
 ## Tests
 - Frameworks: Vitest with React Testing Library; no real calls to the API. Automated tests only where they add value (state logic, error handling, rendering of answers, the dependency rules).
 - Location and naming: next to the code, `<Subject>.test.ts` or `.test.tsx` (e.g. `src/app/App.test.tsx`); helpers in `src/test/`.
 - Command: `npm test` (`vitest run`; `npm run test:watch` while developing). Run from the project folder.
 - Vitest returns CSS as an empty text unless told otherwise; `vite.config.ts` lets it read `tokens.css` (`test.css.include`) for the tokens test.
+- Vitest runs without globals, so `src/test/setup.ts` calls `cleanup` after each test; without it, renders pile up between tests.
 
 ## Run the app
 - `npm install`, then `npm run dev`: the address is printed in the terminal (Vite's default is http://localhost:5173).
