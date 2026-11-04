@@ -32,7 +32,8 @@ Last scan: 2026-11-03, by hand after phase 1 of spec 001. Run `/sdd:scan` again 
   - `app` can import features and shared.
   - A feature can import `shared`, never another feature's internals; it talks to other features only through their `index.ts`.
   - `shared` imports nothing from `features` or `app`.
-- State: one React Context per feature, with a reducer (`useReducer`) for its state and actions. Providers are composed in `app/`. No global store.
+- State: one React Context per feature, with a reducer (`useReducer`) for its state and actions, created with `createFeatureContext(name, reducer, initialState)` from `src/shared/context` in the feature's `context/` folder. It returns the `Provider` and the hook `useFeature()` (`{ state, dispatch }`); reading the hook outside its provider throws a message naming `<NameProvider>`. Providers are composed in `src/app/AppProviders.tsx`. No global store.
+- What a feature exposes: only its `index.ts` (its provider, its hook, its top components and types). Nothing else is imported from outside the feature; spec 001 phase 6 enforces it with a lint rule.
 
 ## Backend contract (back-bot-test-bank)
 - `POST /Chat`, body `{ "message": string, "conversationId"?: string }`. Answer `{ "answer": string, "sources": [{ "id": string, "score": number }], "conversationId": string }`. The first message has no `conversationId`; the answer returns one, and every follow-up must send it back.
