@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
-// One integration journey that grows with each phase of spec 002: a customer opens the page, talks, and starts another
-// inquiry. It uses the real API at VITE_API_BASE_URL (no mocks), so that API must be running with its CORS setting
+// One integration journey that grows with each phase of spec 002: a customer opens the page and talks.
+// It uses the real API at VITE_API_BASE_URL (no mocks), so that API must be running with its CORS setting
 // allowing E2E_BASE_URL. The model answers differently each time, so the journey checks that an answer arrived and that
 // the conversation id is chained, never the exact text. The API allows 5 requests per minute per IP: this journey sends 3.
 // The screenshots are attached to the report so the developer can compare them with design/figma-frame-2-679.png.
@@ -24,7 +24,7 @@ async function askAndWaitForAnswer(page: Page, message: string): Promise<ChatCal
   return { sent: response.request().postDataJSON(), received: await response.json() };
 }
 
-test('a customer holds a conversation and starts another', async ({ page }, testInfo) => {
+test('a customer holds a conversation', async ({ page }, testInfo) => {
   let chatRequests = 0;
   page.on('request', (request) => {
     if (request.url().endsWith('/Chat') && request.method() === 'POST') chatRequests += 1;

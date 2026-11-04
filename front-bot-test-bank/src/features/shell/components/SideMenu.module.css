@@ -53,7 +53,6 @@
 }
 
 .option:focus-visible,
-.add:focus-visible,
 .cardLink:focus-visible,
 .back:focus-visible {
   outline: 2px solid var(--color-text-on-navy);
@@ -82,17 +81,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-17);
-}
-
-.conversationsHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.add {
-  display: flex;
-  color: var(--color-text-on-navy-muted);
 }
 
 .bottom {

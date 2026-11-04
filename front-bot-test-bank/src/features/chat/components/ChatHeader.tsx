@@ -1,7 +1,7 @@
-import { BotMessageSquare, Ellipsis, Plus } from 'lucide-react';
+import { BotMessageSquare, Ellipsis } from 'lucide-react';
 import styles from './ChatHeader.module.css';
 
-/** The assistant's header: who it is, that it is online, and the "New inquiry" button (it does nothing yet). */
+/** The assistant's header: who it is and that it is online. */
 export function ChatHeader() {
   return (
     <div className={styles.header}>
@@ -17,15 +17,9 @@ export function ChatHeader() {
           </div>
         </div>
       </div>
-      <div className={styles.controls}>
-        <button type="button" className={styles.newInquiry}>
-          <Plus size={16} aria-hidden />
-          <span>New inquiry</span>
-        </button>
-        <button type="button" className={styles.more} aria-label="More options">
-          <Ellipsis size={20} aria-hidden />
-        </button>
-      </div>
+      <button type="button" className={styles.more} aria-label="More options">
+        <Ellipsis size={20} aria-hidden />
+      </button>
     </div>
   );
 }

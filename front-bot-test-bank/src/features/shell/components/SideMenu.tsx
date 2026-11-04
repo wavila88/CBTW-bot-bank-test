@@ -1,4 +1,4 @@
-import { ArrowUpRight, ClipboardList, CircleHelp, ExternalLink, Headset, MessagesSquare, Plus } from 'lucide-react';
+import { ArrowUpRight, ClipboardList, CircleHelp, ExternalLink, Headset, MessagesSquare } from 'lucide-react';
 import type { ReactNode } from 'react';
 import styles from './SideMenu.module.css';
 
@@ -40,12 +40,7 @@ export function SideMenu() {
         </div>
         <div className={styles.divider} />
         <div className={styles.conversations}>
-          <div className={styles.conversationsHeader}>
-            <p className={`${styles.label} ${styles.wide}`}>CURRENT CONVERSATION</p>
-            <button type="button" className={styles.add} aria-label="New inquiry">
-              <Plus size={15} aria-hidden />
-            </button>
-          </div>
+          <p className={`${styles.label} ${styles.wide}`}>CURRENT CONVERSATION</p>
         </div>
       </div>
       <div className={styles.bottom}>
