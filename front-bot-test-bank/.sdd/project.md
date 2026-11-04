@@ -45,17 +45,19 @@ Last scan: 2026-11-03, by hand after phase 1 of spec 001. Run `/sdd:scan` again 
 - The API base URL comes from an environment variable (`VITE_API_BASE_URL` with Vite). Never hardcode a URL.
 - `.env.local` is git-ignored; a committed `.env.example` lists the names only, with no values.
 - `src/shared/config/readConfig(env)` is the only place that reads and validates the variables (trailing slash removed, only http/https). Code asks it for the value; it never reads `import.meta.env` directly.
+- HTTP: features never call `fetch`; they use `createApiClient` from `src/shared/api`. It throws only `ApiError` (`kind: 'api'`, status, customer message, trace id), `NetworkError` (`'network'`) or `UnexpectedError` (`'unexpected'`); each feature decides its own message for the last two.
 - `src/app/Root` checks the settings before starting the app; if one is wrong it shows `ConfigErrorPage`, which names the variable. A new required variable is added to `readConfig` and to `.env.example`.
 
 ## Tests
 - Frameworks: Vitest with React Testing Library; no real calls to the API. Automated tests only where they add value (state logic, error handling, rendering of answers, the dependency rules).
 - Location and naming: next to the code, `<Subject>.test.ts` or `.test.tsx` (e.g. `src/app/App.test.tsx`); helpers in `src/test/`.
 - Command: `npm test` (`vitest run`; `npm run test:watch` while developing). Run from the project folder.
+- End to end: Playwright (Edge) in `e2e/*.spec.ts`, run with `npm run test:e2e`. It starts the front itself and talks to a real running API, so it needs `E2E_BASE_URL` (where to start the front) and `VITE_API_BASE_URL` (the API), and the API's `Cors__AllowedOrigin` must equal `E2E_BASE_URL`. The error test needs `E2E_BROKEN_API_URL`: `playwright.config.ts` starts a second API instance there (`dotnet run --no-build`, so the back must be built) with `Pinecone__Host` pointed at a wrong host. Outside CI, servers already running are reused; after changing `playwright.config.ts`, reopen UI mode or reload VS Code. Vitest only reads `src/**/*.test.*`. The API limits 5 requests per minute per IP, so keep the real calls few.
 - Vitest returns CSS as an empty text unless told otherwise; `vite.config.ts` lets it read `tokens.css` (`test.css.include`) for the tokens test.
 - Vitest runs without globals, so `src/test/setup.ts` calls `cleanup` after each test; without it, renders pile up between tests.
 
 ## Run the app
-- `npm install`, then `npm run dev`: the address is printed in the terminal (Vite's default is http://localhost:5173).
+- `npm install`, then `npm run dev`: the address is printed in the terminal (Vite's default port is 5173, served over HTTPS with a self-signed certificate, so the browser asks to accept it once: https://localhost:5173).
 - `npm run build`: type check (`tsc --noEmit`) and production bundle in `dist/`. Lint joins this command in spec 001 phase 6.
 - `npm run preview`: serves the production bundle.
 

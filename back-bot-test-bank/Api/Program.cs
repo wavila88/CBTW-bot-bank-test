@@ -65,6 +65,11 @@ builder.Services.AddRateLimiter(limiter =>
     limiter.OnRejected = (_, _) => throw new DomainException(ErrorCode.TooManyRequests, "Client exceeded the request limit.");
 });
 
+// CORS: only the front's origin may call the API from a browser. It comes from Cors__AllowedOrigin.
+var cors = builder.Configuration.GetSection("Cors").Get<Api.Cors.CorsOptions>() ?? new Api.Cors.CorsOptions();
+var corsPolicy = cors.ToPolicy();
+builder.Services.AddCors(options => options.AddDefaultPolicy(corsPolicy));
+
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<Api.Errors.ApiExceptionHandler>();
 builder.Services.AddControllers();
@@ -75,6 +80,8 @@ builder.Services.AddSwaggerGen();
 var app = builder.Build();
 
 app.UseExceptionHandler();
+// Before the rate limiter, so even a rejected request carries the CORS header and the browser can read its message.
+app.UseCors();
 app.UseRateLimiter();
 
 // Configure the HTTP request pipeline.

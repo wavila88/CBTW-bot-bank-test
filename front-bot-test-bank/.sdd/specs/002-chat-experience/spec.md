@@ -15,7 +15,7 @@ A Bank Test customer opens the support page and talks to the virtual assistant i
 - HP-8: Given an assistant answer, then "Was this helpful?" with thumbs up and thumbs down shows under it, and the customer's choice is highlighted; it is kept only on screen.
 
 ## Sad paths
-- SP-1: Given an empty or whitespace-only message, when the customer tries to send it, then sending is disabled and nothing is sent.
+- SP-1: Given an empty or whitespace-only message, when the customer tries to send it, then nothing is sent and the page says the field is empty ("Please type your question."). Checked only by the front, with unit tests (decided by the developer).
 - SP-2: Given an answer is pending, when the customer tries to send another message, then sending is disabled until the answer or an error arrives, so a message is never sent twice.
 - SP-3: Given the API answers 500, 502, 503 or 504, then an error message with the API's `detail` shows in the conversation, with a "Try again" action that resends the same message; the customer's message stays.
 - SP-4: Given the API answers 429, then the API's message ("You are sending requests too fast...") shows in the conversation and the customer can send again.
