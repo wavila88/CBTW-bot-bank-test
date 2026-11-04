@@ -23,3 +23,20 @@ body {
 h1 {
   margin: 0;
 }
+
+/* Buttons that act as plain text or links start without the browser's look; each component adds its own. */
+button {
+  padding: 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* The design's icons are drawn with a 1.7 stroke (lucide's default is 2). */
+svg.lucide {
+  flex-shrink: 0;
+  stroke-width: 1.7;
+}

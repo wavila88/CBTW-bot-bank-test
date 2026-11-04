@@ -1,35 +1,27 @@
-.header {
+/* The page: the header on top and, below it, the side menu, the chat and the help center (the design's grid). */
+.page {
   display: flex;
-  align-items: center;
-  gap: var(--space-20);
-  height: var(--layout-header-height);
-  padding: 0 var(--space-28);
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  flex-direction: column;
+  height: 100%;
 }
 
-.brand {
-  color: var(--color-navy);
-  font-size: var(--font-size-22);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: var(--letter-spacing-brand);
-}
-
-.divider {
-  width: 1px;
-  height: 28px;
-  background: var(--color-border);
-}
-
-.service {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-14);
+.body {
+  display: grid;
+  flex: 1;
+  grid-template-columns: var(--layout-sidebar-width) minmax(0, 1fr) var(--layout-help-width);
+  min-height: 0;
 }
 
 .main {
+  min-width: 0;
+  padding: var(--space-32) var(--space-16);
+  overflow-y: auto;
+}
+
+/* The plain question box stays here until the designed chat replaces it (spec 002 phase 2). */
+.plainBox {
   max-width: 640px;
   margin: 0 auto;
-  padding: var(--space-32) var(--space-16);
 }
 
 .form {

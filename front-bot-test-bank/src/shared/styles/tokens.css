@@ -17,6 +17,7 @@
   --color-text-muted: #5c6c80;
   --color-text-on-navy: #ffffff;
   --color-text-on-navy-muted: #c5d3e4;
+  --color-success: #1c7a59;
 
   /* Type */
   --font-family: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -42,6 +43,7 @@
   --letter-spacing-label-wide: 1.2px;
 
   /* Spacing: named by its size in pixels, as the design uses it */
+  --space-3: 3px;
   --space-5: 5px;
   --space-6: 6px;
   --space-7: 7px;
@@ -52,11 +54,14 @@
   --space-12: 12px;
   --space-13: 13px;
   --space-14: 14px;
+  --space-15: 15px;
   --space-16: 16px;
+  --space-17: 17px;
   --space-18: 18px;
   --space-20: 20px;
   --space-22: 22px;
   --space-24: 24px;
+  --space-25: 25px;
   --space-26: 26px;
   --space-28: 28px;
   --space-32: 32px;

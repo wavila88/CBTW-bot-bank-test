@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { AppHeader, HelpCenter, SideMenu } from '../features/shell';
 import { ApiError, NetworkError, type ApiClient } from '../shared/api/client';
 import styles from './App.module.css';
 
@@ -40,35 +41,37 @@ export function App({ client }: { client: ApiClient }) {
   }
 
   return (
-    <>
-      <header className={styles.header}>
-        <h1 className={styles.brand}>Bank Test</h1>
-        <div className={styles.divider} />
-        <span className={styles.service}>Customer support</span>
-      </header>
-      <main className={styles.main}>
-        <form className={styles.form} onSubmit={send}>
-          <label className={styles.label} htmlFor="question">
-            Your question
-          </label>
-          <textarea
-            id="question"
-            className={styles.input}
-            rows={3}
-            value={question}
-            onChange={(event) => setQuestion(event.target.value)}
-          />
-          <button className={styles.button} type="submit" disabled={sending}>
-            Send
-          </button>
-        </form>
-        {answer !== null && <p className={styles.answer}>{answer}</p>}
-        {failure !== null && (
-          <p className={styles.failure} role="alert">
-            {failure}
-          </p>
-        )}
-      </main>
-    </>
+    <div className={styles.page}>
+      <AppHeader />
+      <div className={styles.body}>
+        <SideMenu />
+        <main className={styles.main}>
+          <div className={styles.plainBox}>
+            <form className={styles.form} onSubmit={send}>
+              <label className={styles.label} htmlFor="question">
+                Your question
+              </label>
+              <textarea
+                id="question"
+                className={styles.input}
+                rows={3}
+                value={question}
+                onChange={(event) => setQuestion(event.target.value)}
+              />
+              <button className={styles.button} type="submit" disabled={sending}>
+                Send
+              </button>
+            </form>
+            {answer !== null && <p className={styles.answer}>{answer}</p>}
+            {failure !== null && (
+              <p className={styles.failure} role="alert">
+                {failure}
+              </p>
+            )}
+          </div>
+        </main>
+        <HelpCenter />
+      </div>
+    </div>
   );
 }

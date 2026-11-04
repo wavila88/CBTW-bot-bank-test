@@ -18,12 +18,6 @@ async function ask(question: string) {
 }
 
 describe('App', () => {
-  it('shows the Bank Test first page', () => {
-    render(<App client={clientThatAnswers('')} />);
-
-    expect(screen.getByRole('heading', { name: 'Bank Test' })).toBeInTheDocument();
-  });
-
   it('sends the question to POST /Chat and shows the answer', async () => {
     const client = clientThatAnswers('Open Settings and choose Reset password.');
     render(<App client={client} />);

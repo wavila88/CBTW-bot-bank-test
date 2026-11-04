@@ -18,6 +18,7 @@ Last scan: 2026-11-03, by hand after phase 1 of spec 001. Run `/sdd:scan` again 
 - Tests: Vitest 5 with React Testing Library and `@testing-library/jest-dom`, in a `jsdom` environment (`vite.config.ts`, `src/test/setup.ts`)
 - Package manager: npm; Node 20 or newer (`engines` in `package.json`; developed on Node 24)
 - Styling: CSS Modules (`*.module.css`) that use the design's tokens as CSS variables from `src/shared/styles/tokens.css`; global rules in `src/shared/styles/global.css`; no UI kit (spec 001 phase 2)
+- Icons: `lucide-react`, the library the Figma icons come from (authorized by the developer, spec 002 phase 1). Import each icon by name (`import { Landmark } from 'lucide-react'`), decorative ones with `aria-hidden`; never copy SVGs by hand.
 - Font: Inter, self-hosted through `@fontsource-variable/inter`, so no request goes to a third party (`src/main.tsx`)
 
 ## Planned decisions (proposed defaults, not in code yet)
