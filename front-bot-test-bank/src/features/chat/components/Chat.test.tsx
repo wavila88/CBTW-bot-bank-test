@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { ApiError, NetworkError, type ApiClient } from '../../../shared/api/client';
@@ -13,6 +13,20 @@ function clientThatAnswers(answer: string, conversationId = 'c1'): FakeClient {
 
 function clientThatFails(error: Error): FakeClient {
   return { post: vi.fn().mockRejectedValue(error) };
+}
+
+/** A client whose answer stays pending until the test calls `answer`. */
+function clientWithPendingAnswer() {
+  let resolve!: (value: unknown) => void;
+  const client: FakeClient = {
+    post: vi.fn().mockReturnValue(
+      new Promise((done) => {
+        resolve = done;
+      }),
+    ),
+  };
+  const answer = (text: string) => act(async () => resolve({ answer: text, sources: [], conversationId: 'c1' }));
+  return { client, answer };
 }
 
 function renderChat(client: ApiClient) {
@@ -101,6 +115,49 @@ describe('Chat', () => {
 
     expect(client.post).toHaveBeenNthCalledWith(1, '/Chat', { message: 'first question' });
     expect(client.post).toHaveBeenNthCalledWith(2, '/Chat', { message: 'and in dollars?', conversationId: 'c-77' });
+  });
+
+  it('shows the typing indicator and blocks sending until the answer arrives', async () => {
+    const { client, answer } = clientWithPendingAnswer();
+    renderChat(client);
+
+    await ask('Hello');
+
+    expect(screen.getByRole('status', { name: 'The assistant is typing' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled();
+
+    await answer('Hi there');
+
+    expect(await screen.findByText('Hi there')).toBeInTheDocument();
+    expect(screen.queryByRole('status', { name: 'The assistant is typing' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Send' })).toBeEnabled();
+  });
+
+  it('does not send a second message while the answer is pending', async () => {
+    const { client } = clientWithPendingAnswer();
+    renderChat(client);
+
+    await ask('Hello');
+    await userEvent.type(field(), 'and another one{Enter}');
+
+    expect(client.post).toHaveBeenCalledTimes(1);
+    expect(field()).toHaveValue('and another one');
+  });
+
+  it('shows one check on the customer message while it waits and two once it is answered', async () => {
+    const { client, answer } = clientWithPendingAnswer();
+    renderChat(client);
+
+    await ask('Hello');
+
+    expect(screen.getByRole('img', { name: 'Sent' })).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'Answered' })).not.toBeInTheDocument();
+
+    await answer('Hi there');
+    await screen.findByText('Hi there');
+
+    expect(screen.getByRole('img', { name: 'Answered' })).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: 'Sent' })).not.toBeInTheDocument();
   });
 
   it('puts the text of a suggested button in the field without sending it', async () => {

@@ -47,10 +47,10 @@ Journey (adds to the same test, with the real API): right after pressing Enter o
 Unit: `src/features/chat/` tests assert the indicator while the client call is pending, that a second send does nothing, and that the checks go from one to two when the answer arrives.
 Manual check: ask a question and see the dots and the disabled button; press Enter twice quickly and see a single message.
 
-- [ ] 3.1 Failing test — result: ________
-- [ ] 3.2 Implementation — files: ________
-- [ ] 3.3 Passing test — result: ________
-- [ ] 3.4 Developer approval
+- [x] 3.1 Failing test — result: Vitest `Test Files 1 failed, 3 tests failed` in `Chat.test.tsx` (`Unable to find an accessible element with the role "status" and name "The assistant is typing"`; `Unable to find ... role "img" and name "Sent"`; the second Enter was still sent); the journey step for the pending follow-up is added and needs the back end running to be run
+- [x] 3.2 Implementation — files: `src/features/chat/hooks/useSendMessage.ts` (`send` now answers at once whether the message was accepted, and ignores a message while an answer is pending; the request runs after), `components/Composer.tsx` (clears the field as soon as the message is accepted; the send button is disabled while pending) and `Composer.module.css` (faded when disabled), `components/Messages.tsx` (`TypingMessage`: three dots in an assistant bubble with `role="status"`; `CustomerMessage` shows `Check` while it waits and `CheckCheck` once answered, labelled "Sent" and "Answered") and `Messages.module.css` (the dots animation, still when the system asks for reduced motion), `components/MessageList.tsx` (shows the typing message while pending and tells each customer message if an assistant message follows it), `components/Chat.tsx`; tests in `Chat.test.tsx` (3 new) and the pending step in `e2e/chat-journey.spec.ts`. A bug found by the test about the second message: the field was only cleared when the answer arrived, so the question stayed written while waiting; it is cleared on sending now
+- [x] 3.3 Passing test — result: Vitest `Test Files 7 passed, Tests 36 passed`; `npm run build` OK; the journey with the real API `1 passed` (the follow-up shows the dots, the disabled button, a second Enter sends nothing so only 2 calls had been made, then both customer messages show two checks; 3 calls of the API in total). Screenshot of the pending state compared by me: the field empty, one check on the message, the three dots in an assistant bubble, the send button faded
+- [x] 3.4 Developer approval — approved by the developer
 
 ## Phase 4 — Well formatted answers (covers HP-3)
 Result: the answer text renders as the design: numbered steps as the blue-circled list, bold text, code-style menu names and citations like `[KB-05]`, line breaks kept. HTML or script in the text is shown as plain text and never runs. A markdown renderer that never renders raw HTML is added (to confirm the library before installing).

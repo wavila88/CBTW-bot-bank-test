@@ -15,20 +15,17 @@ function newMessage(author: ChatMessage['author'], text: string): ChatMessage {
   return { id: `message-${lastId}`, author, text, sentAt: new Date() };
 }
 
-/** Sends a question to `POST /Chat` and keeps the conversation state. Returns whether the message was sent (a blank one is not). */
+/**
+ * Sends a question to `POST /Chat` and keeps the conversation state. `send` answers at once whether the message was
+ * accepted (a blank one, or one sent while an answer is pending, is not), so the caller can clear its field right
+ * away; the answer arrives later through the state.
+ */
 export function useSendMessage(client: ApiClient) {
   const { state, dispatch } = useChatState();
 
-  async function send(text: string): Promise<boolean> {
-    const question = text.trim();
-    if (question === '') {
-      dispatch({ type: 'blankRejected' });
-      return false;
-    }
-
-    dispatch({ type: 'messageSent', message: newMessage('customer', question) });
+  async function ask(question: string, conversationId: string | null) {
     try {
-      const body = state.conversationId ? { message: question, conversationId: state.conversationId } : { message: question };
+      const body = conversationId ? { message: question, conversationId } : { message: question };
       const result = await client.post<ChatAnswer>('/Chat', body);
       dispatch({
         type: 'answerReceived',
@@ -38,6 +35,20 @@ export function useSendMessage(client: ApiClient) {
     } catch (error) {
       dispatch({ type: 'requestFailed', failure: failureMessage(error) });
     }
+  }
+
+  function send(text: string): boolean {
+    // One question at a time: while an answer is pending, nothing else is sent.
+    if (state.pending) return false;
+
+    const question = text.trim();
+    if (question === '') {
+      dispatch({ type: 'blankRejected' });
+      return false;
+    }
+
+    dispatch({ type: 'messageSent', message: newMessage('customer', question) });
+    void ask(question, state.conversationId);
     return true;
   }
 

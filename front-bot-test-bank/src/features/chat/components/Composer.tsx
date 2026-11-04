@@ -8,24 +8,24 @@ const suggestions = ['To Bank Test', 'To another bank', 'Speak with an advisor']
  * Where the customer writes: three suggested buttons (they fill the field, they do not send), the message field
  * (Enter sends, Shift+Enter adds a line), the disabled microphone, the send button and the notes under it.
  */
-export function Composer({ onSend }: { onSend: (text: string) => Promise<boolean> }) {
+export function Composer({ onSend, sending }: { onSend: (text: string) => boolean; sending: boolean }) {
   const [text, setText] = useState('');
   const field = useRef<HTMLTextAreaElement>(null);
 
-  async function submit() {
-    // A blank message is kept in the field; a sent one clears it.
-    if (await onSend(text)) setText('');
+  function submit() {
+    // A message that was not accepted (blank, or one sent while an answer is pending) stays in the field; a sent one clears it.
+    if (onSend(text)) setText('');
   }
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    void submit();
+    submit();
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
       event.preventDefault();
-      void submit();
+      submit();
     }
   }
 
@@ -59,7 +59,7 @@ export function Composer({ onSend }: { onSend: (text: string) => Promise<boolean
           <Mic size={20} aria-hidden />
         </button>
         <span className={styles.divider} />
-        <button type="submit" className={styles.send} aria-label="Send">
+        <button type="submit" className={styles.send} aria-label="Send" disabled={sending}>
           <ArrowUp size={20} aria-hidden />
         </button>
       </form>

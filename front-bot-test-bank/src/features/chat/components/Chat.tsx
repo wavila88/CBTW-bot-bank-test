@@ -12,8 +12,8 @@ export function Chat({ client }: { client: ApiClient }) {
   return (
     <div className={styles.chat}>
       <ChatHeader />
-      <MessageList messages={state.messages} failure={state.failure} />
-      <Composer onSend={send} />
+      <MessageList messages={state.messages} pending={state.pending} failure={state.failure} />
+      <Composer onSend={send} sending={state.pending} />
     </div>
   );
 }

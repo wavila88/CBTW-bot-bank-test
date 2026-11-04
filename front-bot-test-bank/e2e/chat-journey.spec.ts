@@ -82,11 +82,31 @@ test('a customer holds a conversation and starts another', async ({ page }, test
   await expect(chat.getByText(first.received.answer, { exact: false }).first()).toBeVisible();
   await expect(chat.getByRole('alert')).toHaveCount(0);
 
+  // Phase 3: while the follow-up is pending (the real call takes a few seconds) the typing dots show, sending is
+  // blocked, and pressing Enter again sends nothing.
+  const typing = chat.getByRole('status', { name: 'The assistant is typing' });
+  await field.fill('and in dollars?');
+  const followUpResponse = page.waitForResponse((r) => r.url().endsWith('/Chat') && r.request().method() === 'POST');
+  await field.press('Enter');
+  await expect(typing).toBeVisible();
+  await expect(chat.getByRole('button', { name: 'Send' })).toBeDisabled();
+  await field.fill('this must not be sent');
+  await field.press('Enter');
+
   // The follow-up carries the conversation id the first answer returned, and the API continues that conversation.
-  const followUp = await askAndWaitForAnswer(page, 'and in dollars?');
+  const response = await followUpResponse;
+  expect(response.status()).toBe(200);
+  const followUp: ChatCall = { sent: response.request().postDataJSON(), received: await response.json() };
   expect(followUp.sent.conversationId).toBe(first.received.conversationId);
   expect(followUp.received.conversationId).toBe(first.received.conversationId);
   await expect(chat.getByText(followUp.received.answer, { exact: false }).first()).toBeVisible();
+  expect(chatRequests).toBe(2);
+
+  // The answer is here: the dots are gone, sending works again, and both customer messages show two checks.
+  await expect(typing).toBeHidden();
+  await expect(chat.getByRole('button', { name: 'Send' })).toBeEnabled();
+  await expect(chat.getByRole('img', { name: 'Answered' })).toHaveCount(2);
+  await expect(chat.getByRole('img', { name: 'Sent' })).toHaveCount(0);
 
   // A message in Spanish: the API answers and the reply is shown as it comes.
   const spanish = await askAndWaitForAnswer(page, '¿Cómo bloqueo mi tarjeta?');
