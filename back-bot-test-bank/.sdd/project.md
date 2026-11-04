@@ -15,6 +15,7 @@ Last scan: 2026-11-01 (updated after removing the `Register` sample, spec 001 ph
 - Microsoft Semantic Kernel is the chosen library for conversation state (`ChatHistory` + history reducer) and chat completion. Prefer library features over manual code, but only inside adapters: one project per adapter: `Infra.Vector.Pinne` for Pinecone and an `Infra.AI.SemanticKernel` project for Semantic Kernel (← .sdd/specs/002-rag-customer-bot-chat/spec.md)
 - Model and vector store are swappable by configuration: a new provider means a new adapter project (`Infra.<Kind>.<Name>`) plus a config value (← .sdd/specs/002-rag-customer-bot-chat/spec.md)
 - Conversations are kept server-side by `conversationId`, in memory behind a port (← .sdd/specs/002-rag-customer-bot-chat/spec.md)
+- Business rules live in Domain entities; Application orchestrates the ports and asks the entities. First case: `Conversation` owns the idle-expiry rule (15 minutes, `Chat__ConversationIdleMinutes`); Infra only removes what the rule marks (← .sdd/specs/003-conversation-expiry/spec.md)
 - English is the priority reply language; the default and fallback is English (← .sdd/specs/002-rag-customer-bot-chat/spec.md)
 - Error handling: Domain defines `DomainException` with a code (`ErrorCode`), with no text and no HTTP; Application never chooses the HTTP response; one table in `Api/Errors` maps codes to status and customer message, and one global handler logs the real cause with a trace id; no stack trace, inner message, key or URL reaches the caller, in Development too; controllers do not catch domain errors (← spec 001, phase 3a)
 
@@ -40,7 +41,7 @@ Carried over from the removed `Register` sample; follow them in new code.
 - Error handling: spec 001 phase 3a (one table in `Api/Errors`); rate limit: spec 001 phase 3c (`TooManyRequests`, one global limiter)
 
 ## Configuration
-- Environment-specific values (keys, index name, namespace, embedding model, dimension, TopK, host) come from environment variables, e.g. `Pinecone__ApiKey`, `Pinecone__IndexName`, `OpenAI__ApiKey`, `Chat__Model`, `Chat__TopK`, `RateLimit__PermitLimit`. Never hardcode them in code or commit them in JSON.
+- Environment-specific values (keys, index name, namespace, embedding model, dimension, TopK, host) come from environment variables, e.g. `Pinecone__ApiKey`, `Pinecone__IndexName`, `OpenAI__ApiKey`, `Chat__Model`, `Chat__TopK`, `RateLimit__PermitLimit`, `Cors__AllowedOrigin` (the front's origin, e.g. `https://localhost:5173`; startup fails without it). Never hardcode them in code or commit them in JSON.
 - `Api/appsettings.Local.json` is an optional, git-ignored local fallback; environment variables win. The committed template `appsettings.Local.example.json` holds placeholders only.
 - Code holds no defaults for these values. Startup validation names each missing setting (`PineconeOptions.Validate()`, `Chat:TopK` in `Api/Program.cs`).
 - Only protocol constants stay in code (Pinecone `ControlPlaneUrl`, `ApiVersion`).

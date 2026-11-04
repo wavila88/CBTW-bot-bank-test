@@ -87,7 +87,7 @@ Manual check: send `"message": "  "` from Swagger to `POST /Chat` and get a 400 
 ## Phase 12 — Unknown or expired conversation (covers SP-1b)
 Test: `AskQuestionUseCaseTests` asserts that an unknown `conversationId` starts a new conversation and the response flags it; `Tests/Infra/` asserts that a conversation idle past `Chat__ConversationIdleMinutes` is treated as unknown.
 Manual check: send a made-up `conversationId` and get an answer with a new id and the "new conversation" flag.
-Note: the idle expiry value (proposed 30 minutes) is pending developer confirmation; it comes from configuration, not code.
+Note: the idle expiry itself (15 minutes, rule in Domain) moved to spec 003 and is built there first; this phase keeps only the "new conversation" flag in the response.
 
 - [ ] 12.1 Failing test — result: ________
 - [ ] 12.2 Implementation — files: ________
