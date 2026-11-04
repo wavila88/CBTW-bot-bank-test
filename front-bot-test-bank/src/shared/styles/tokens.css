@@ -60,6 +60,7 @@
   --space-18: 18px;
   --space-20: 20px;
   --space-22: 22px;
+  --space-23: 23px;
   --space-24: 24px;
   --space-25: 25px;
   --space-26: 26px;
@@ -77,4 +78,6 @@
   --layout-header-height: 80px;
   --layout-sidebar-width: 232px;
   --layout-help-width: 320px;
+  --layout-chat-header-height: 88px;
+  --layout-message-field-height: 62px;
 }

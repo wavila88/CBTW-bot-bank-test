@@ -1,13 +1,34 @@
-import { expect, test } from '@playwright/test';
-import { installFakeChatApi } from './support/fakeChatApi';
+import { expect, test, type Page } from '@playwright/test';
 
-// One journey that grows with each phase of spec 002: a customer opens the page, talks, and starts another inquiry.
-// The API is a scripted fake (see support/fakeChatApi.ts); the real one is only used by ask-a-question.spec.ts.
+// One integration journey that grows with each phase of spec 002: a customer opens the page, talks, and starts another
+// inquiry. It uses the real API at VITE_API_BASE_URL (no mocks), so that API must be running with its CORS setting
+// allowing E2E_BASE_URL. The model answers differently each time, so the journey checks that an answer arrived and that
+// the conversation id is chained, never the exact text. The API allows 5 requests per minute per IP: this journey sends 3.
 // The screenshots are attached to the report so the developer can compare them with design/figma-frame-2-679.png.
 test.use({ viewport: { width: 1440, height: 1000 } });
 
+interface ChatCall {
+  sent: { message: string; conversationId?: string };
+  received: { answer: string; conversationId: string };
+}
+
+/** Types a message, sends it with Enter and waits for the real API's answer to that call. */
+async function askAndWaitForAnswer(page: Page, message: string): Promise<ChatCall> {
+  const field = page.getByRole('main').getByRole('textbox', { name: 'Your question' });
+  await field.fill(message);
+  const [response] = await Promise.all([
+    page.waitForResponse((r) => r.url().endsWith('/Chat') && r.request().method() === 'POST'),
+    field.press('Enter'),
+  ]);
+  expect(response.status()).toBe(200);
+  return { sent: response.request().postDataJSON(), received: await response.json() };
+}
+
 test('a customer holds a conversation and starts another', async ({ page }, testInfo) => {
-  await installFakeChatApi(page);
+  let chatRequests = 0;
+  page.on('request', (request) => {
+    if (request.url().endsWith('/Chat') && request.method() === 'POST') chatRequests += 1;
+  });
   await page.goto('/');
 
   // Phase 1: the page structure as in the mock-up.
@@ -34,4 +55,44 @@ test('a customer holds a conversation and starts another', async ({ page }, test
   await expect(help.getByRole('button', { name: 'Accessibility' })).toBeVisible();
 
   await testInfo.attach('1-page-structure', { body: await page.screenshot(), contentType: 'image/png' });
+
+  // Phase 2: the real chat.
+  const chat = page.getByRole('main');
+  await expect(chat.getByText('Bank Test Assistant')).toBeVisible();
+  await expect(chat.getByText('Online · Available 24/7')).toBeVisible();
+  await expect(chat.getByText('Hello, welcome to Bank Test.')).toBeVisible();
+
+  // A suggested button fills the field and sends nothing.
+  const field = chat.getByRole('textbox', { name: 'Your question' });
+  await chat.getByRole('button', { name: 'To Bank Test', exact: true }).click();
+  await expect(field).toHaveValue('To Bank Test');
+  expect(chatRequests).toBe(0);
+
+  // A blank message sends nothing and says so.
+  await field.fill('   ');
+  await field.press('Enter');
+  await expect(chat.getByRole('alert')).toHaveText('Please type your question.');
+  expect(chatRequests).toBe(0);
+
+  // The first question: no conversation id goes out, the API gives one back and its answer shows.
+  const first = await askAndWaitForAnswer(page, 'How do I pay with my card abroad?');
+  expect(first.sent.conversationId).toBeUndefined();
+  expect(first.received.conversationId).toBeTruthy();
+  await expect(chat.getByText('How do I pay with my card abroad?')).toBeVisible();
+  await expect(chat.getByText(first.received.answer, { exact: false }).first()).toBeVisible();
+  await expect(chat.getByRole('alert')).toHaveCount(0);
+
+  // The follow-up carries the conversation id the first answer returned, and the API continues that conversation.
+  const followUp = await askAndWaitForAnswer(page, 'and in dollars?');
+  expect(followUp.sent.conversationId).toBe(first.received.conversationId);
+  expect(followUp.received.conversationId).toBe(first.received.conversationId);
+  await expect(chat.getByText(followUp.received.answer, { exact: false }).first()).toBeVisible();
+
+  // A message in Spanish: the API answers and the reply is shown as it comes.
+  const spanish = await askAndWaitForAnswer(page, '¿Cómo bloqueo mi tarjeta?');
+  expect(spanish.sent.conversationId).toBe(first.received.conversationId);
+  await expect(chat.getByText(spanish.received.answer, { exact: false }).first()).toBeVisible();
+  expect(chatRequests).toBe(3);
+
+  await testInfo.attach('2-chat', { body: await page.screenshot(), contentType: 'image/png' });
 });
