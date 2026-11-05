@@ -6,9 +6,10 @@ using Microsoft.SemanticKernel.ChatCompletion;
 namespace Infra.AI.SemanticKernel
 {
     /// <summary>Keeps each conversation in memory as a Semantic Kernel ChatHistory. Conversations survive requests, not a restart.</summary>
-    public sealed class SemanticKernelConversationStore : IConversationStore
+    public sealed class SemanticKernelConversationStore(TimeProvider time) : IConversationStore
     {
         private readonly ConcurrentDictionary<string, ChatHistory> conversations = new();
+        private readonly ConcurrentDictionary<string, DateTimeOffset> lastActivity = new();
 
         public Task<IReadOnlyList<ChatTurn>> GetTurnsAsync(string conversationId, CancellationToken ct = default)
         {
@@ -33,6 +34,17 @@ namespace Infra.AI.SemanticKernel
                 history.AddUserMessage(turn.User);
                 history.AddAssistantMessage(turn.Assistant);
             }
+            lastActivity[conversationId] = time.GetUtcNow();
+            return Task.CompletedTask;
+        }
+
+        public Task<Conversation?> FindAsync(string conversationId, CancellationToken ct = default) =>
+            Task.FromResult(lastActivity.TryGetValue(conversationId, out var last) ? new Conversation(conversationId, last) : null);
+
+        public Task RemoveAsync(string conversationId, CancellationToken ct = default)
+        {
+            conversations.TryRemove(conversationId, out _);
+            lastActivity.TryRemove(conversationId, out _);
             return Task.CompletedTask;
         }
     }

@@ -14,14 +14,14 @@ Check these at each approval (4th task of the phase), besides the tests.
 - **Manual mapping** between layers, no mapper library. Tests: xUnit + Moq, fake `TimeProvider`, no real waiting, no real network.
 
 ## Phase 1 — A conversation idle for 10 minutes is forgotten, and the rule lives in Domain (covers HP-1, SP-1, SP-2)
-Result: the new entity `Conversation` (Domain) holds the id, the turns and the last activity, and decides `IsFollowUp` and `IsExpired(now, idle)`. `IConversationStore` returns and saves `Conversation`. `AskQuestionUseCase` asks the entity instead of testing `history.Count`; an expired conversation is treated as unknown and a new one starts; a message within the idle time keeps the context and restarts the idle time. `Chat__ConversationIdleMinutes` (10) is read and validated at startup, and a missing or non-positive value stops the app naming the setting.
-Test: `Tests/Domain/ConversationTests.cs` (no mocks: not expired at exactly the idle time, expired after it, adding a turn restarts the idle time, `IsFollowUp` false when empty). `Tests/Application/AskQuestionUseCaseTests.cs` (a conversation inside the idle time keeps its context; an expired one starts new and is not rewritten as a follow-up; fake `TimeProvider`). `Tests/Infra/SemanticKernelConversationStoreTests.cs` (the store returns the saved `Conversation` and keeps ids apart). `Tests/Api/` (startup validation names `Chat__ConversationIdleMinutes` when missing, zero or negative).
+Result: the business rule lives in Domain: `Conversation.ShouldForget(found, now, idle)` says a known conversation idle for more than the idle time must be forgotten. `IConversationStore` keeps its turn methods and gains `FindAsync` and `RemoveAsync`; the store records the last activity when a turn is added. `AskQuestionUseCase` only asks Domain and, when it says to forget, removes the conversation so the question starts a new one. The idle time (10 minutes) comes from the environment variable `Chat__ConversationIdleMinutes`, read and validated in `Api/Program.cs` (missing or not positive stops the app naming it) and passed to Domain as a parameter; Domain reads no configuration. Minimum change, only two new tests.
+Test: `Tests/Domain/ConversationTests.cs` (no mocks: not forgotten up to the idle time, forgotten after it, an unknown conversation is not forgotten). `Tests/Application/AskQuestionUseCaseTests.cs` (a conversation idle past the idle time starts new: no earlier turns in the prompt; fake `TimeProvider`). The startup validation (SP-2) is checked by hand.
 Manual check: set `Chat__ConversationIdleMinutes` to 1, ask a question, ask a follow-up inside the minute (context kept), wait over a minute and send the same `conversationId`: the answer no longer follows the earlier topic. Then unset the variable and see the startup error naming it.
 
-- [ ] 1.1 Failing test — result: ________
-- [ ] 1.2 Implementation — files: ________
-- [ ] 1.3 Passing test — result: ________
-- [ ] 1.4 Developer approval (including the architecture rules above)
+- [x] 1.1 Failing test — result: FAILED: build errors, `Conversation` and `FindAsync`/`RemoveAsync` do not exist yet
+- [x] 1.2 Implementation — files: `Domain/Models/Conversation.cs` (new), `Domain/Ports/IConversationStore.cs`, `Application/UseCases/AskQuestionUseCase.cs`, `Infra.AI.SemanticKernel/SemanticKernelConversationStore.cs`, `Api/Program.cs`, `Api/appsettings.Local.json` (git-ignored, 1 minute for the manual test)
+- [x] 1.3 Passing test — result: Passed! 57 passed, 0 failed (`dotnet test Tests/Tests.csproj`)
+- [x] 1.4 Developer approval (including the architecture rules above)
 
 ## Phase 2 — Clean idle conversations without a request (covers HP-2)
 Result: a periodic cleanup removes the conversations that `Conversation.IsExpired` marks, so memory is freed with no traffic. The port gets one method to remove expired conversations (the rule stays in Domain; Infra only deletes). The cleanup runs in `Api` as a hosted background service, every `Chat__ConversationIdleMinutes`, and it is the only new piece in `Api`.

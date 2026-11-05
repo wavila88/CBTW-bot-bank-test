@@ -3,6 +3,7 @@ using Application.UseCases;
 using Domain.Models;
 using Domain.Ports;
 using Moq;
+using Tests.Support;
 
 namespace Tests.Application
 {
@@ -12,6 +13,7 @@ namespace Tests.Application
         private const string Question = "How do I block my card?";
         private const string FollowUp = "and in dollars?";
         private const int ConfiguredTopK = 4;
+        private static readonly TimeSpan Idle = TimeSpan.FromMinutes(10);
 
         private static readonly VectorChunk[] Chunks =
         {
@@ -27,6 +29,7 @@ namespace Tests.Application
         private readonly Mock<IVector> vector = new();
         private readonly Mock<IChatModel> model = new();
         private readonly Mock<IConversationStore> store = new();
+        private readonly FakeTimeProvider clock = new(new DateTimeOffset(2026, 11, 5, 10, 0, 0, TimeSpan.Zero));
 
         // Every call to the model, in order: the rewrite of a follow-up first (if any), then the answer.
         private readonly List<IReadOnlyList<ChatMessage>> calls = new();
@@ -49,7 +52,7 @@ namespace Tests.Application
                 });
         }
 
-        private AskQuestionUseCase UseCase() => new(vector.Object, model.Object, store.Object, Rules, ConfiguredTopK);
+        private AskQuestionUseCase UseCase() => new(vector.Object, model.Object, store.Object, clock, Idle, Rules, ConfiguredTopK);
 
         [Fact]
         public async Task ExecuteAsync_SearchesTheTrimmedQuestionWithTheConfiguredTopK()
@@ -180,6 +183,23 @@ namespace Tests.Application
 
             var sent = Assert.Single(calls);
             Assert.DoesNotContain("Interpretation in context", sent[sent.Count - 1].Content);
+        }
+
+        [Fact]
+        public async Task ExecuteAsync_ForgetsAConversationIdlePastTheIdleTimeAndStartsANewOne()
+        {
+            previousTurns = Earlier;
+            store.Setup(s => s.FindAsync("conversation-1", It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new Conversation("conversation-1", clock.GetUtcNow()));
+            store.Setup(s => s.RemoveAsync("conversation-1", It.IsAny<CancellationToken>()))
+                .Callback(() => previousTurns = Array.Empty<ChatTurn>())
+                .Returns(Task.CompletedTask);
+            clock.Advance(Idle + TimeSpan.FromSeconds(1));
+
+            await UseCase().ExecuteAsync(FollowUp, "conversation-1");
+
+            var sent = Assert.Single(calls);
+            Assert.Equal(new[] { ChatRole.System, ChatRole.User }, sent.Select(m => m.Role));
         }
     }
 }

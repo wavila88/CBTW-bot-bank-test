@@ -9,5 +9,11 @@ namespace Domain.Ports
         Task<IReadOnlyList<ChatTurn>> GetTurnsAsync(string conversationId, CancellationToken ct = default);
 
         Task AddTurnAsync(string conversationId, ChatTurn turn, CancellationToken ct = default);
+
+        /// <summary>Returns the conversation with its last activity, or null when the id is unknown.</summary>
+        Task<Conversation?> FindAsync(string conversationId, CancellationToken ct = default);
+
+        /// <summary>Forgets the conversation and its turns.</summary>
+        Task RemoveAsync(string conversationId, CancellationToken ct = default);
     }
 }

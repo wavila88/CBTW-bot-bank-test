@@ -19,6 +19,11 @@ pinecone.Validate();
 var topK = builder.Configuration.GetValue<int?>("Chat:TopK")
     ?? throw new InvalidOperationException("Missing setting Chat__TopK.");
 
+// How long a conversation may stay idle before it is forgotten; the rule itself lives in Domain.
+var idleMinutes = builder.Configuration.GetValue<int?>("Chat:ConversationIdleMinutes");
+if (idleMinutes is null or <= 0)
+    throw new InvalidOperationException("Missing or invalid setting Chat__ConversationIdleMinutes.");
+
 // The rules for the chat model live in a file, so they can be edited without recompiling.
 var rulesPath = builder.Configuration["Chat:RulesPath"]
     ?? throw new InvalidOperationException("Missing setting Chat__RulesPath.");
@@ -36,6 +41,7 @@ var openAi = new OpenAIChatOptions
     Model = builder.Configuration["Chat:Model"] ?? ""
 };
 builder.Services.AddSemanticKernelChatModel(openAi);
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSemanticKernelConversationStore();
 
 // Use cases (Application)
@@ -43,7 +49,8 @@ builder.Services.AddScoped<ISearchGuidesUseCase>(sp =>
     new SearchGuidesUseCase(sp.GetRequiredService<IVector>(), topK));
 builder.Services.AddScoped<IAskQuestionUseCase>(sp =>
     new AskQuestionUseCase(
-        sp.GetRequiredService<IVector>(), sp.GetRequiredService<IChatModel>(), sp.GetRequiredService<IConversationStore>(), rules, topK));
+        sp.GetRequiredService<IVector>(), sp.GetRequiredService<IChatModel>(), sp.GetRequiredService<IConversationStore>(),
+        sp.GetRequiredService<TimeProvider>(), TimeSpan.FromMinutes(idleMinutes.Value), rules, topK));
 
 // Add services to the container.
 
